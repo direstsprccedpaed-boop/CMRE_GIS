@@ -1,14 +1,11 @@
 /* =====================================================================
    SIG DE POCHE — UTI CMRE-EN (VNF)
-   app.js (v5 - isolation des sections + icones agrandies + zones tactiles)
-   Chaque bloc fonctionnel (recherche, sheet, glossaire, couches, geoloc,
-   zoom) est independant : une erreur dans un bloc n'empeche plus les
-   autres blocs de s'initialiser.
+   app.js (v6 - reservoirs strategiques + fallback etiquettes + API interne)
    ===================================================================== */
 (function () {
 "use strict";
 
-const BUILD_ID = "SIG-POCHE-2026-08-18-V5-CLICKS-FIX";
+const BUILD_ID = "SIG-POCHE-2026-08-18-V6-PATRIMOINE";
 
 function getTag(props, keys) {
   if (!props) return null;
@@ -113,8 +110,6 @@ function autoDetectFeatureCollection(expectedNames, matchFn) {
   return { fc: null, foundAs: null };
 }
 
-// Execute une fonction d'installation isolee : une erreur ici n'empeche pas
-// l'execution des blocs suivants (recherche, sheet, glossaire, etc.).
 function safeSetup(label, fn) {
   try {
     fn();
@@ -269,6 +264,48 @@ const CATS = {
   autre:             { label: "Ouvrage / point d'interet",color: "#7f8c8d", svg: iconGeneric,      z: 1, halo: 38 }
 };
 
+/* ---------------------------------------------------------------------
+   3-bis. RESERVOIRS STRATEGIQUES DE REFERENCE (liste nommee)
+   Coordonnees approximatives -- a verifier/ajuster avec le referentiel
+   VNF interne avant mise en production (precision cible < 50 m).
+   --------------------------------------------------------------------- */
+const STRATEGIC_RESERVOIRS = [
+  { name: "Reservoir de Bouzey",        lat: 48.1505, lng: 6.3835, radiusM: 900  },
+  { name: "Etang de Mittersheim",       lat: 48.8975, lng: 6.9395, radiusM: 700  },
+  { name: "Reservoir de Stock",         lat: 48.6675, lng: 7.1830, radiusM: 600  },
+  { name: "Etang d'Alteville",          lat: 48.7845, lng: 6.7505, radiusM: 500  },
+  { name: "Etang de Gondrexange",       lat: 48.7127, lng: 6.8927, radiusM: 1200 },
+  { name: "Etang de Parroy",            lat: 48.6167, lng: 6.6167, radiusM: 900  },
+  { name: "Retenue de Rechicourt",      lat: 48.7333, lng: 6.9667, radiusM: 700  }
+];
+function loadStrategicReservoirs() {
+  let count = 0;
+  STRATEGIC_RESERVOIRS.forEach(function (r) {
+    const circle = L.circle([r.lat, r.lng], {
+      radius: r.radiusM, color: "#1f4f72", weight: 1.3, fillColor: "#2980b9", fillOpacity: 0.85
+    });
+    circle._vnfMeta = { kind: "reservoir-strategique", name: r.name };
+    circle.bindTooltip(r.name, { permanent: false, className: "reservoir-label" });
+    circle.on("click", function () { openReservoirSheet({}, r.name); });
+    layers.reservoirs.addLayer(circle);
+    addSearchEntry(r.name, "reservoir", [r.lat, r.lng], "Reservoir strategique de reference");
+    count++;
+  });
+  return count;
+}
+function findNearestBiefName(latlng, maxDegrees) {
+  const max = maxDegrees || 0.012;
+  let best = null, bestDist = Infinity;
+  for (let i = 0; i < searchIndex.length; i++) {
+    const e = searchIndex[i];
+    if (e.type !== "bief") continue;
+    const dLat = e.latlng[0] - latlng[0], dLng = e.latlng[1] - latlng[1];
+    const d = Math.sqrt(dLat * dLat + dLng * dLng);
+    if (d < bestDist) { bestDist = d; best = e.label; }
+  }
+  return (bestDist <= max) ? best : null;
+}
+
 const layers = {
   waterwaysNav: L.layerGroup(), waterwaysNonNav: L.layerGroup(),
   dpfManaged: L.layerGroup(),
@@ -345,7 +382,16 @@ function loadPoints(fc) {
     const name = getTag(props, KEYS.name) || getTag(props, KEYS.lockName);
     const addrCity = getTag(props, KEYS.addrCity);
     if (cat === "ecluse" || cat === "pci") {
-      const labelText = (name || catDef.label) + (addrCity ? " (" + addrCity + ")" : "");
+      let baseLabel = name;
+      let subLabel = addrCity ? (" (" + addrCity + ")") : "";
+      if (!baseLabel) {
+        baseLabel = lockRef ? ("Ecluse " + lockRef) : catDef.label;
+        if (!addrCity) {
+          const nearestBief = findNearestBiefName(latlng);
+          if (nearestBief) subLabel = " (" + nearestBief + ")";
+        }
+      }
+      const labelText = baseLabel + subLabel;
       marker.bindTooltip(labelText, { permanent: true, direction: "right", offset: [haloSize / 2, 0], className: "ouvrage-label", opacity: 1 });
       marker._labelFineOnly = true;
     }
@@ -446,6 +492,10 @@ safeSetup("Ajout des couches sur la carte", function () {
   Object.keys(layers).forEach(function (k) { layers[k].addTo(map); });
   const b = layers.waterwaysNav.getBounds();
   if (b.isValid()) map.fitBounds(b, { padding: [24, 24] });
+});
+safeSetup("Chargement des reservoirs strategiques", function () {
+  const nRes = loadStrategicReservoirs();
+  if (nRes === 0) throw new Error("aucun reservoir strategique charge");
 });
 
 function toggleLayerVisibility(layerGroup, show) {
@@ -835,5 +885,24 @@ safeSetup("Initialisation zoom personnalise", function () {
 renderDiagBanner();
 document.title = BUILD_ID;
 showToast(BUILD_ID + " - " + n2 + " lignes, " + n3 + " points, " + nSeg + " segments VNF", 6000);
+
+safeSetup("Exposition window.SIG_APP", function () {
+  window.SIG_APP = {
+    map: map,
+    layers: layers,
+    CATS: CATS,
+    KEYS: KEYS,
+    VKEYS: VKEYS,
+    searchIndex: searchIndex,
+    pkIndex: pkIndex,
+    getTag: getTag,
+    escapeHtml: escapeHtml,
+    norm: norm,
+    showToast: showToast,
+    pkFromHecto: pkFromHecto,
+    detSegFc: detSeg.fc,
+    STRATEGIC_RESERVOIRS: STRATEGIC_RESERVOIRS
+  };
+});
 
 })();
