@@ -10,8 +10,8 @@ const required = [
   'data/export_2.js',
   'data/export_3.js',
   'data/SegmentationMarne_au_RhinMoselle_1.js',
-  'www/communeResolver.js',
-  'www/data/communes.geojson',
+  'communeResolver.js',
+  'data/communes.geojson',
 ];
 
 let missing = [];
