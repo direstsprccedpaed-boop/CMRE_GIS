@@ -1,0 +1,6 @@
+{
+  "appId": "fr.vnf.uticmreen.sigpoche",
+  "appName": "Carto UTI CMRE",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}
