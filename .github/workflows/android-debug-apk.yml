@@ -49,7 +49,7 @@ jobs:
           test -f www/icons/rectangle-navigation-bateau.svg
           test -f www/data/export_2.js
           test -f www/data/export_3.js
-          test -f www/data/SegmentationMarne_au_RhinMoselle_1-3.js
+          test -f www/data/SegmentationMarne_au_RhinMoselle_1.js
 
       - name: Installer les dépendances npm
         run: npm ci
@@ -71,7 +71,7 @@ jobs:
           grep -q 'src="./lib/leaflet/leaflet.js"' www/index.html
           grep -q 'src="./data/export_2.js"' www/index.html
           grep -q 'src="./data/export_3.js"' www/index.html
-          grep -q 'src="./data/SegmentationMarne_au_RhinMoselle_1-3.js"' www/index.html
+          grep -q 'src="./data/SegmentationMarne_au_RhinMoselle_1.js"' www/index.html
           grep -q 'src="./app.js"' www/index.html
           grep -q 'rectangle-navigation-bateau' www/app.js
           echo 'Références web validées.'
@@ -97,7 +97,7 @@ jobs:
           test -f "$PUBLIC_DIR/icons/rectangle-navigation-bateau.svg"
           test -f "$PUBLIC_DIR/data/export_2.js"
           test -f "$PUBLIC_DIR/data/export_3.js"
-          test -f "$PUBLIC_DIR/data/SegmentationMarne_au_RhinMoselle_1-3.js"
+          test -f "$PUBLIC_DIR/data/SegmentationMarne_au_RhinMoselle_1.js"
           grep -q 'rectangle-navigation-bateau' "$PUBLIC_DIR/app.js"
           echo 'Ressources web correctement copiées dans Android.'
 
