@@ -1,11 +1,7 @@
-/* =====================================================================
-   SIG DE POCHE — UTI CMRE-EN (VNF)
-   app.js (v6 - reservoirs strategiques + fallback etiquettes + API interne)
-   ===================================================================== */
 (function () {
 "use strict";
 
-const BUILD_ID = "SIG-POCHE-2026-08-18-V6-PATRIMOINE";
+const BUILD_ID = "SIG-POCHE-2026-08-18-V6-COMMUNES";
 
 function getTag(props, keys) {
   if (!props) return null;
@@ -70,6 +66,61 @@ function offsetLatLngs(mapRef, latlngs, pixelOffset) {
   } catch (e) { return latlngs; }
 }
 
+// ---------------------------------------------------------------------
+// Resolution communale locale (module optionnel communeResolver.js).
+// Si le module est absent ou pas encore charge, l'app continue de
+// fonctionner normalement (repli texte, aucune exception).
+// ---------------------------------------------------------------------
+function communeSectionHtml(list, pending) {
+  if (pending) return "<div class=\"sheet-section\"><h4>Localisation</h4><div class=\"note-box\">Resolution de la commune en cours...</div></div>";
+  if (!list || !list.length) return "<div class=\"sheet-section\"><h4>Localisation</h4><div class=\"note-box\">Localisation indisponible (contours communaux non charges).</div></div>";
+  if (list.length === 1) {
+    return "<div class=\"sheet-section\"><h4>Localisation</h4><div class=\"attr-grid\">" + attrCard("Commune", list[0].name, true) + "</div></div>";
+  }
+  const items = list.map(function (c) { return "<li>" + escapeHtml(c.name) + "</li>"; }).join("");
+  return "<div class=\"sheet-section\"><h4>Communes traversees</h4><ul style=\"margin:0;padding-left:18px;font-size:14px;color:#101c22;\">" + items + "</ul></div>";
+}
+
+function withCommuneSection(sheetBodyEl, cacheKey, lon, lat, geometry, staticHtml) {
+  const hasResolver = !!(window.CommuneResolver);
+  if (!hasResolver) {
+    sheetBodyEl.innerHTML = staticHtml + communeSectionHtml(null, false);
+    sheetBodyEl._currentCacheKey = cacheKey;
+    return;
+  }
+  const alreadyReady = window.CommuneResolver.isReady();
+  const immediate = alreadyReady ? window.CommuneResolver.resolveForFeature(cacheKey, lon, lat, geometry) : null;
+  sheetBodyEl.innerHTML = staticHtml + communeSectionHtml(immediate, !alreadyReady);
+  sheetBodyEl._currentCacheKey = cacheKey;
+  if (!alreadyReady) {
+    window.CommuneResolver.ready().then(function () {
+      if (sheetBodyEl._currentCacheKey !== cacheKey) return;
+      const list = window.CommuneResolver.resolveForFeature(cacheKey, lon, lat, geometry);
+      sheetBodyEl.innerHTML = staticHtml + communeSectionHtml(list, false);
+    }).catch(function () {
+      if (sheetBodyEl._currentCacheKey !== cacheKey) return;
+      sheetBodyEl.innerHTML = staticHtml + communeSectionHtml(null, false);
+    });
+  }
+}
+
+function enhanceTooltipWithCommune(marker, cacheKey, lon, lat, baseLabel) {
+  if (!window.CommuneResolver) return;
+  function applyLabel(list) {
+    const communeName = (list && list[0] && list[0].name) ? list[0].name : null;
+    if (!communeName) return;
+    const tt = marker.getTooltip ? marker.getTooltip() : null;
+    if (tt) tt.setContent(baseLabel + " \u2014 " + communeName);
+  }
+  if (window.CommuneResolver.isReady()) {
+    applyLabel(window.CommuneResolver.resolveForFeature(cacheKey, lon, lat, null));
+  } else {
+    window.CommuneResolver.ready().then(function () {
+      applyLabel(window.CommuneResolver.resolveForFeature(cacheKey, lon, lat, null));
+    }).catch(function () {});
+  }
+}
+
 const diagLog = [];
 function diag(label, ok, detail) { diagLog.push({ label: label, ok: ok, detail: detail }); }
 function renderDiagBanner() {
@@ -126,8 +177,9 @@ try {
   map.setView([48.66, 6.35], 12);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
-    attribution: "&copy; OpenStreetMap contributors — Donnees voies navigables : VNF / OSM / IGN BD TOPO / Sandre BD Topage"
+    attribution: "&copy; OpenStreetMap contributors — Donnees voies navigables : VNF / OSM / IGN BD TOPO / Sandre BD Topage / Etalab (contours communaux)"
   }).addTo(map);
+  if (window.CommuneResolver) { window.CommuneResolver.ready().catch(function () {}); }
 } catch (fatalMapError) {
   console.error("Erreur fatale a l'initialisation de la carte:", fatalMapError);
   const overlay = document.createElement("div");
@@ -264,48 +316,6 @@ const CATS = {
   autre:             { label: "Ouvrage / point d'interet",color: "#7f8c8d", svg: iconGeneric,      z: 1, halo: 38 }
 };
 
-/* ---------------------------------------------------------------------
-   3-bis. RESERVOIRS STRATEGIQUES DE REFERENCE (liste nommee)
-   Coordonnees approximatives -- a verifier/ajuster avec le referentiel
-   VNF interne avant mise en production (precision cible < 50 m).
-   --------------------------------------------------------------------- */
-const STRATEGIC_RESERVOIRS = [
-  { name: "Reservoir de Bouzey",        lat: 48.1505, lng: 6.3835, radiusM: 900  },
-  { name: "Etang de Mittersheim",       lat: 48.8975, lng: 6.9395, radiusM: 700  },
-  { name: "Reservoir de Stock",         lat: 48.6675, lng: 7.1830, radiusM: 600  },
-  { name: "Etang d'Alteville",          lat: 48.7845, lng: 6.7505, radiusM: 500  },
-  { name: "Etang de Gondrexange",       lat: 48.7127, lng: 6.8927, radiusM: 1200 },
-  { name: "Etang de Parroy",            lat: 48.6167, lng: 6.6167, radiusM: 900  },
-  { name: "Retenue de Rechicourt",      lat: 48.7333, lng: 6.9667, radiusM: 700  }
-];
-function loadStrategicReservoirs() {
-  let count = 0;
-  STRATEGIC_RESERVOIRS.forEach(function (r) {
-    const circle = L.circle([r.lat, r.lng], {
-      radius: r.radiusM, color: "#1f4f72", weight: 1.3, fillColor: "#2980b9", fillOpacity: 0.85
-    });
-    circle._vnfMeta = { kind: "reservoir-strategique", name: r.name };
-    circle.bindTooltip(r.name, { permanent: false, className: "reservoir-label" });
-    circle.on("click", function () { openReservoirSheet({}, r.name); });
-    layers.reservoirs.addLayer(circle);
-    addSearchEntry(r.name, "reservoir", [r.lat, r.lng], "Reservoir strategique de reference");
-    count++;
-  });
-  return count;
-}
-function findNearestBiefName(latlng, maxDegrees) {
-  const max = maxDegrees || 0.012;
-  let best = null, bestDist = Infinity;
-  for (let i = 0; i < searchIndex.length; i++) {
-    const e = searchIndex[i];
-    if (e.type !== "bief") continue;
-    const dLat = e.latlng[0] - latlng[0], dLng = e.latlng[1] - latlng[1];
-    const d = Math.sqrt(dLat * dLat + dLng * dLng);
-    if (d < bestDist) { bestDist = d; best = e.label; }
-  }
-  return (bestDist <= max) ? best : null;
-}
-
 const layers = {
   waterwaysNav: L.layerGroup(), waterwaysNonNav: L.layerGroup(),
   dpfManaged: L.layerGroup(),
@@ -335,8 +345,8 @@ function loadWaterways(fc) {
     const isNav = st !== NONNAV_STYLE;
     const latlngs = geom.coordinates.map(function (c) { return [c[1], c[0]]; });
     const line = L.polyline(latlngs, { color: st.color, weight: st.weight, opacity: 0.95, dashArray: st.dash || null, lineCap: "round", lineJoin: "round" });
-    line._vnfMeta = { kind: "waterway", props: props, styleLabel: st.label };
-    line.on("click", function () { openWaterwaySheet(props, st); });
+    line._vnfMeta = { kind: "waterway", props: props, styleLabel: st.label, geometry: geom };
+    line.on("click", function () { openWaterwaySheet(props, st, geom); });
     (isNav ? layers.waterwaysNav : layers.waterwaysNonNav).addLayer(line);
     count++;
     const name = getTag(props, KEYS.name) || getTag(props, KEYS.nameFr);
@@ -350,9 +360,9 @@ function loadReservoirPolygon(f, props) {
   rings.forEach(function (poly) {
     const latlngs = poly.map(function (ring) { return ring.map(function (c) { return [c[1], c[0]]; }); });
     const polygon = L.polygon(latlngs, { color: "#1b4f72", weight: 1.1, fillColor: "#2980b9", fillOpacity: 0.85 });
-    polygon._vnfMeta = { kind: "reservoir", props: props };
+    polygon._vnfMeta = { kind: "reservoir", props: props, geometry: geom };
     const name = getTag(props, KEYS.name) || getTag(props, KEYS.nameFr);
-    polygon.on("click", function () { openReservoirSheet(props, name); });
+    polygon.on("click", function () { openReservoirSheet(props, name, geom); });
     if (name) {
       polygon.bindTooltip(name, { permanent: false, className: "reservoir-label" });
       addSearchEntry(name, "reservoir", latlngs[0][0], "Reservoir / etang");
@@ -363,7 +373,7 @@ function loadReservoirPolygon(f, props) {
 function loadPoints(fc) {
   if (!fc || !fc.features) return 0;
   let count = 0;
-  fc.features.forEach(function (f) {
+  fc.features.forEach(function (f, idx) {
     const props = f.properties || {};
     const geom = f.geometry;
     if (!geom || geom.type !== "Point") return;
@@ -371,29 +381,22 @@ function loadPoints(fc) {
     const cat = categorizePoint(props);
     const catDef = CATS[cat];
     const haloSize = catDef.halo || 40;
+    const cacheKey = "pt_" + cat + "_" + idx;
     const marker = L.marker(latlng, {
       icon: L.divIcon({ className: "vnf-icon", html: catDef.svg(catDef.color), iconSize: [haloSize, haloSize], iconAnchor: [haloSize / 2, haloSize / 2] }),
       zIndexOffset: catDef.z * 100
     });
-    marker._vnfMeta = { kind: "point", cat: cat, props: props };
-    marker.on("click", function () { openPointSheet(props, cat); });
+    marker._vnfMeta = { kind: "point", cat: cat, props: props, cacheKey: cacheKey, lon: geom.coordinates[0], lat: geom.coordinates[1] };
+    marker.on("click", function () { openPointSheet(props, cat, cacheKey, geom.coordinates[0], geom.coordinates[1]); });
 
     const lockRef = getTag(props, KEYS.lockRef);
     const name = getTag(props, KEYS.name) || getTag(props, KEYS.lockName);
     const addrCity = getTag(props, KEYS.addrCity);
     if (cat === "ecluse" || cat === "pci") {
-      let baseLabel = name;
-      let subLabel = addrCity ? (" (" + addrCity + ")") : "";
-      if (!baseLabel) {
-        baseLabel = lockRef ? ("Ecluse " + lockRef) : catDef.label;
-        if (!addrCity) {
-          const nearestBief = findNearestBiefName(latlng);
-          if (nearestBief) subLabel = " (" + nearestBief + ")";
-        }
-      }
-      const labelText = baseLabel + subLabel;
-      marker.bindTooltip(labelText, { permanent: true, direction: "right", offset: [haloSize / 2, 0], className: "ouvrage-label", opacity: 1 });
+      const baseLabel = (name || catDef.label) + (addrCity ? " (" + addrCity + ")" : "");
+      marker.bindTooltip(baseLabel, { permanent: true, direction: "right", offset: [haloSize / 2, 0], className: "ouvrage-label", opacity: 1 });
       marker._labelFineOnly = true;
+      if (!addrCity) enhanceTooltipWithCommune(marker, cacheKey, geom.coordinates[0], geom.coordinates[1], (name || catDef.label));
     }
 
     if (cat === "ecluse") layers.locks.addLayer(marker);
@@ -417,7 +420,7 @@ function loadPoints(fc) {
 function loadVnfSegmentation(fc) {
   if (!fc || !fc.features) return 0;
   let count = 0;
-  fc.features.forEach(function (f) {
+  fc.features.forEach(function (f, idx) {
     const props = f.properties || {};
     const geom = f.geometry;
     if (!geom) return;
@@ -428,17 +431,18 @@ function loadVnfSegmentation(fc) {
     else if (geom.type === "LineString") latlngsSets = [geom.coordinates.map(function (c) { return [c[1], c[0]]; })];
     else return;
 
+    const cacheKey = "seg_" + idx;
     const poly = L.polyline(latlngsSets, { color: st.color, weight: st.weight, opacity: 0.001, dashArray: st.dash || null });
-    poly._vnfMeta = { kind: "vnfseg", props: props };
-    poly.on("click", function () { openVnfSegmentSheet(props); });
+    poly._vnfMeta = { kind: "vnfseg", props: props, geometry: geom, cacheKey: cacheKey };
+    poly.on("click", function () { openVnfSegmentSheet(props, cacheKey, geom); });
     layers.vnfSegments.addLayer(poly);
 
     latlngsSets.forEach(function (set) {
       if (set.length < 2) return;
       const offset = offsetLatLngs(map, set, 6);
       const dpfLine = L.polyline(offset, { color: dpfSt.color, weight: dpfSt.weight, dashArray: dpfSt.dash, opacity: 0.85 });
-      dpfLine._vnfMeta = { kind: "dpfline", props: props };
-      dpfLine.on("click", function () { openVnfSegmentSheet(props); });
+      dpfLine._vnfMeta = { kind: "dpfline", props: props, geometry: geom, cacheKey: cacheKey };
+      dpfLine.on("click", function () { openVnfSegmentSheet(props, cacheKey, geom); });
       layers.dpfManaged.addLayer(dpfLine);
     });
 
@@ -450,9 +454,9 @@ function loadVnfSegmentation(fc) {
     if (voie && fpkh !== null && first) {
       addSearchEntry(voie + " - PK " + fpkh, "pk", first, "Referentiel VNF", fpkh);
       const marker = L.marker(first, { icon: L.divIcon({ className: "vnf-icon", html: iconPk("#34495e"), iconSize: [30, 30], iconAnchor: [15, 15] }), zIndexOffset: 50 });
-      marker._vnfMeta = { kind: "pkpoint", props: props, pk: fpkh };
+      marker._vnfMeta = { kind: "pkpoint", props: props, pk: fpkh, geometry: geom, cacheKey: cacheKey };
       marker.bindTooltip("PK " + fpkh, { permanent: false, className: "pk-label" });
-      marker.on("click", function () { openVnfSegmentSheet(props); });
+      marker.on("click", function () { openVnfSegmentSheet(props, cacheKey, geom); });
       layers.pkMarkers.addLayer(marker);
       pkIndex.push({ pk: fpkh, latlng: first, voie: voie });
       if (tpkh !== null) pkIndex.push({ pk: tpkh, latlng: latlngsSets[latlngsSets.length - 1].slice(-1)[0], voie: voie });
@@ -492,10 +496,6 @@ safeSetup("Ajout des couches sur la carte", function () {
   Object.keys(layers).forEach(function (k) { layers[k].addTo(map); });
   const b = layers.waterwaysNav.getBounds();
   if (b.isValid()) map.fitBounds(b, { padding: [24, 24] });
-});
-safeSetup("Chargement des reservoirs strategiques", function () {
-  const nRes = loadStrategicReservoirs();
-  if (nRes === 0) throw new Error("aucun reservoir strategique charge");
 });
 
 function toggleLayerVisibility(layerGroup, show) {
@@ -540,7 +540,7 @@ function attrCard(label, value, full) {
 let sheet, sheetCategory, sheetTitle, sheetIconEl, sheetBody;
 function openSheet() { sheet.classList.remove("peek"); sheet.classList.add("open"); }
 function closeSheet() { sheet.classList.remove("open"); sheet.classList.remove("peek"); }
-function openWaterwaySheet(props, st) {
+function openWaterwaySheet(props, st, geometry, cacheKey) {
   const name = getTag(props, KEYS.name) || getTag(props, KEYS.nameFr) || "Voie d'eau";
   sheetCategory.textContent = "Bief / voie navigable";
   sheetTitle.textContent = name;
@@ -552,24 +552,26 @@ function openWaterwaySheet(props, st) {
   const maxwidth = getTag(props, KEYS.maxwidth);
   const width = getTag(props, KEYS.width);
   const note = getTag(props, KEYS.note) || getTag(props, KEYS.description);
-  sheetBody.innerHTML =
+  const staticHtml =
     "<div class=\"sheet-section\"><h4>Classification</h4><div class=\"tag-row\"><span class=\"tag-chip\" style=\"background:" + st.color + "22;color:" + st.color + "\">" + escapeHtml(st.label) + "</span></div></div>" +
     "<div class=\"sheet-section\"><h4>Caracteristiques de gabarit</h4><div class=\"attr-grid\">" +
     attrCard("Classe CEMT", cemt) + attrCard("Largeur (m)", width) + attrCard("Tirant d'eau max (m)", maxdraft) + attrCard("Tirant d'air max (m)", maxheight) + attrCard("Largeur navigable max (m)", maxwidth) +
     "</div></div>" +
     (note ? ("<div class=\"sheet-section\"><h4>Notes</h4><div class=\"note-box\">" + escapeHtml(note) + "</div></div>") : "");
+  withCommuneSection(sheetBody, cacheKey || null, null, null, geometry || null, staticHtml);
   openSheet();
 }
-function openReservoirSheet(props, name) {
+function openReservoirSheet(props, name, geometry, cacheKey) {
   sheetCategory.textContent = "Reservoir / etang d'alimentation";
   sheetTitle.textContent = name || "Reservoir";
   sheetIconEl.style.background = "#2980b9";
   sheetIconEl.innerHTML = iconGeneric("#fff");
   const note = getTag(props, KEYS.note) || getTag(props, KEYS.description);
-  sheetBody.innerHTML = "<div class=\"sheet-section\"><h4>Attributs</h4><div class=\"note-box\">Ouvrage soumis a la reglementation Securite des Ouvrages Hydrauliques (SOH). " + (note ? escapeHtml(note) : "Aucune note complementaire disponible dans les donnees actuelles.") + "</div></div>";
+  const staticHtml = "<div class=\"sheet-section\"><h4>Attributs</h4><div class=\"note-box\">Ouvrage soumis a la reglementation Securite des Ouvrages Hydrauliques (SOH). " + (note ? escapeHtml(note) : "Aucune note complementaire disponible dans les donnees actuelles.") + "</div></div>";
+  withCommuneSection(sheetBody, cacheKey || null, null, null, geometry || null, staticHtml);
   openSheet();
 }
-function openPointSheet(props, cat) {
+function openPointSheet(props, cat, cacheKey, lon, lat) {
   const catDef = CATS[cat];
   const name = getTag(props, KEYS.name) || getTag(props, KEYS.lockName) || getTag(props, KEYS.seamarkName) || catDef.label;
   sheetCategory.textContent = catDef.label;
@@ -590,22 +592,28 @@ function openPointSheet(props, cat) {
   let bodyHtml = "";
   if (cat === "ecluse") {
     bodyHtml += "<div class=\"sheet-section\"><h4>Identification</h4><div class=\"attr-grid\">" +
-      attrCard("Numero d'ecluse", lockRef) + attrCard("Commune", addrCity) + attrCard("Chute d'eau (m)", lockHeight) + attrCard("Dimensions utiles du sas", (maxlength && maxwidth) ? (maxlength + " x " + maxwidth + " m") : null) +
+      attrCard("Numero d'ecluse", lockRef) + attrCard("Chute d'eau (m)", lockHeight) + attrCard("Dimensions utiles du sas", (maxlength && maxwidth) ? (maxlength + " x " + maxwidth + " m") : null) +
       "</div></div><div class=\"sheet-section\"><h4>Exploitation</h4><div class=\"attr-grid\">" +
       attrCard("Automatisme", automated) + attrCard("Gestionnaire", operatorTag) + attrCard("Horaires", openingHours) + attrCard("Canal VHF", vhf) +
       "</div></div>";
   } else if (cat === "pci") {
-    bodyHtml += "<div class=\"sheet-section\"><h4>Poste de commande d'itineraire</h4><div class=\"attr-grid\">" + attrCard("Commune", addrCity) + attrCard("Gestionnaire", operatorTag) + "</div></div>";
+    bodyHtml += "<div class=\"sheet-section\"><h4>Poste de commande d'itineraire</h4><div class=\"attr-grid\">" + attrCard("Gestionnaire", operatorTag) + "</div></div>";
   } else if (cat === "pont" || cat === "souterrain") {
-    bodyHtml += "<div class=\"sheet-section\"><h4>Franchissement</h4><div class=\"attr-grid\">" + attrCard("Hauteur libre (m)", clearance) + attrCard("Commune", addrCity) + "</div></div>";
+    bodyHtml += "<div class=\"sheet-section\"><h4>Franchissement</h4><div class=\"attr-grid\">" + attrCard("Hauteur libre (m)", clearance) + "</div></div>";
   } else {
-    bodyHtml += "<div class=\"sheet-section\"><h4>Informations</h4><div class=\"attr-grid\">" + attrCard("Commune", addrCity) + attrCard("Gestionnaire", operatorTag) + attrCard("Horaires", openingHours) + "</div></div>";
+    bodyHtml += "<div class=\"sheet-section\"><h4>Informations</h4><div class=\"attr-grid\">" + attrCard("Gestionnaire", operatorTag) + attrCard("Horaires", openingHours) + "</div></div>";
   }
   if (note) bodyHtml += "<div class=\"sheet-section\"><h4>Notes d'exploitation</h4><div class=\"note-box\">" + escapeHtml(note) + "</div></div>";
-  sheetBody.innerHTML = bodyHtml;
+  if (addrCity) {
+    bodyHtml += "<div class=\"sheet-section\"><h4>Localisation</h4><div class=\"attr-grid\">" + attrCard("Commune", addrCity, true) + "</div></div>";
+    sheetBody.innerHTML = bodyHtml;
+    sheetBody._currentCacheKey = cacheKey || null;
+  } else {
+    withCommuneSection(sheetBody, cacheKey || null, lon, lat, null, bodyHtml);
+  }
   openSheet();
 }
-function openVnfSegmentSheet(props) {
+function openVnfSegmentSheet(props, cacheKey, geometry) {
   const voie = getTag(props, VKEYS.voie) || "Segment DPF";
   const fpkh = pkFromHecto(getTag(props, VKEYS.fpkh));
   const tpkh = pkFromHecto(getTag(props, VKEYS.tpkh));
@@ -621,10 +629,11 @@ function openVnfSegmentSheet(props) {
   sheetTitle.textContent = voie + (fpkh !== null ? (" - PK " + fpkh) : "");
   sheetIconEl.style.background = "#34495e";
   sheetIconEl.innerHTML = iconPk("#fff");
-  sheetBody.innerHTML =
+  const staticHtml =
     "<div class=\"sheet-section\"><h4>Positionnement</h4><div class=\"attr-grid\">" + attrCard("PK debut", fpkh) + attrCard("PK fin", tpkh) + attrCard("Longueur (km)", longueur) + attrCard("Nature", nature) + "</div></div>" +
     "<div class=\"sheet-section\"><h4>Navigation</h4><div class=\"attr-grid\">" + attrCard("Navigabilite", navigabilite) + attrCard("Gabarit", gabarit) + attrCard("Largeur", largeur) + "</div></div>" +
     "<div class=\"sheet-section\"><h4>Domanialite</h4><div class=\"attr-grid\">" + attrCard("Statut domanial", statutDom) + attrCard("Autorite", autorite) + attrCard("Exploitant", exploitant) + "</div></div>";
+  withCommuneSection(sheetBody, cacheKey || null, null, null, geometry || null, staticHtml);
   openSheet();
 }
 safeSetup("Initialisation bottom sheet", function () {
@@ -885,24 +894,5 @@ safeSetup("Initialisation zoom personnalise", function () {
 renderDiagBanner();
 document.title = BUILD_ID;
 showToast(BUILD_ID + " - " + n2 + " lignes, " + n3 + " points, " + nSeg + " segments VNF", 6000);
-
-safeSetup("Exposition window.SIG_APP", function () {
-  window.SIG_APP = {
-    map: map,
-    layers: layers,
-    CATS: CATS,
-    KEYS: KEYS,
-    VKEYS: VKEYS,
-    searchIndex: searchIndex,
-    pkIndex: pkIndex,
-    getTag: getTag,
-    escapeHtml: escapeHtml,
-    norm: norm,
-    showToast: showToast,
-    pkFromHecto: pkFromHecto,
-    detSegFc: detSeg.fc,
-    STRATEGIC_RESERVOIRS: STRATEGIC_RESERVOIRS
-  };
-});
 
 })();
