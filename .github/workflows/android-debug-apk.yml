@@ -18,11 +18,19 @@ jobs:
       - name: Installer Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: '22'
+          # Le cache npm nécessite un package-lock.json committé à la racine.
+          # Une fois celui-ci ajouté au dépôt (voir guide), vous pouvez réactiver :
+          # cache: 'npm'
 
       - name: Installer les dépendances npm
-        run: npm ci
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            echo "::warning::package-lock.json absent — utilisation de 'npm install'. Committez le lock file pour des builds reproductibles et plus rapides."
+            npm install
+          fi
 
       - name: Installer Java (JDK 17 requis par Gradle/Capacitor)
         uses: actions/setup-java@v4
