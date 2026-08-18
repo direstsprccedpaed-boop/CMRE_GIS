@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>SIG Poche UTI CMRE-EN – VNF</title>
+<meta name="theme-color" content="#0b2e45">
+<link rel="icon" href="./icons/icon-1024.png">
+<link rel="stylesheet" href="./lib/leaflet/leaflet.css">
+<style>
+/* ============================================================
+   VARIABLES & RESET
+   ============================================================ */
+:root{
+  --c-bg:#0b2e45;
+  --c-bg-2:#0f3b57;
+  --c-accent:#f7ca18;
+  --c-accent-dark:#c98f0a;
+  --c-orange:#e67e22;
+  --c-orange-dark:#a8500f;
+  --c-blue-rigole:#5bc0de;
+  --c-danger:#e74c3c;
+  --c-ok:#2ecc71;
+  --c-white:#ffffff;
+  --c-ink:#101c22;
+  --c-panel:#ffffff;
+  --c-panel-2:#f4f7f9;
+  --c-border:#d7dee3;
+  --touch:48px;
+  --safe-t:env(safe-area-inset-top,0px);
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-l:env(safe-area-inset-left,0px);
+  --safe-r:env(safe-area-inset-right,0px);
+  --radius:16px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--c-bg);color:var(--c-ink);}
+button{font-family:inherit;}
+#map{position:absolute;inset:0;background:#cfe6ef;z-index:1;}
+
+/* ============================================================
+   TOP BAR / SEARCH
+   ============================================================ */
+#topbar{
+  position:absolute;top:0;left:0;right:0;z-index:1000;
+  padding:calc(var(--safe-t)+8px) calc(var(--safe-r)+8px) 8px calc(var(--safe-l)+8px);
+  display:flex;gap:8px;align-items:center;
+  background:linear-gradient(180deg,rgba(11,46,69,0.92),rgba(11,46,69,0));
+  pointer-events:none;
+}
+#topbar > *{pointer-events:auto;}
+#searchWrap{
+  flex:1;display:flex;align-items:center;background:var(--c-panel);
+  border-radius:14px;height:var(--touch);padding:0 12px;
+  box-shadow:0 4px 14px rgba(0,0,0,.35);
+}
+#searchIcon{width:22px;height:22px;flex:0 0 auto;color:#5b6b73;}
+#searchInput{
+  flex:1;border:none;outline:none;height:100%;font-size:16px;
+  padding:0 8px;background:transparent;color:var(--c-ink);
+}
+#searchClear{
+  display:none;width:32px;height:32px;border:none;background:#eef2f4;border-radius:50%;
+  color:#5b6b73;font-size:16px;align-items:center;justify-content:center;flex:0 0 auto;
+}
+.iconbtn{
+  width:var(--touch);height:var(--touch);border-radius:14px;border:none;
+  background:var(--c-panel);box-shadow:0 4px 14px rgba(0,0,0,.35);
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:var(--c-bg);
+}
+.iconbtn svg{width:24px;height:24px;}
+.iconbtn:active{transform:scale(0.94);}
+
+#searchResults{
+  position:absolute;top:calc(var(--safe-t)+64px);left:calc(var(--safe-l)+8px);right:calc(var(--safe-r)+8px);
+  z-index:999;background:var(--c-panel);border-radius:14px;max-height:52vh;overflow-y:auto;
+  box-shadow:0 8px 24px rgba(0,0,0,.4);display:none;
+}
+#searchResults.show{display:block;}
+.sr-item{
+  display:flex;align-items:center;gap:10px;padding:12px 14px;min-height:var(--touch);
+  border-bottom:1px solid var(--c-border);cursor:pointer;
+}
+.sr-item:last-child{border-bottom:none;}
+.sr-item:active{background:var(--c-panel-2);}
+.sr-badge{
+  flex:0 0 auto;width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;color:#fff;
+}
+.sr-text{display:flex;flex-direction:column;overflow:hidden;}
+.sr-title{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sr-sub{font-size:12px;color:#5b6b73;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* ============================================================
+   RIGHT SIDE CONTROLS
+   ============================================================ */
+#rightControls{
+  position:absolute;right:calc(var(--safe-r)+8px);top:auto;bottom:calc(var(--safe-b)+180px);
+  z-index:900;display:flex;flex-direction:column;gap:10px;
+}
+
+/* ============================================================
+   BOTTOM SHEET
+   ============================================================ */
+#bottomSheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:1500;
+  background:var(--c-panel);border-radius:20px 20px 0 0;
+  box-shadow:0 -6px 24px rgba(0,0,0,.35);
+  transform:translateY(100%);
+  transition:transform .32s cubic-bezier(.22,.94,.36,1);
+  will-change:transform;
+  max-height:86vh;display:flex;flex-direction:column;
+  padding-bottom:calc(var(--safe-b));
+}
+#bottomSheet.open{transform:translateY(0);}
+#bottomSheet.peek{transform:translateY(calc(100% - 96px));}
+#sheetHandleZone{
+  padding:10px 0 4px 0;display:flex;flex-direction:column;align-items:center;
+  cursor:grab;flex:0 0 auto;touch-action:none;
+}
+#sheetHandle{width:44px;height:5px;border-radius:4px;background:#ccd4d8;}
+#sheetHeader{
+  display:flex;align-items:flex-start;gap:12px;padding:6px 16px 10px 16px;flex:0 0 auto;
+}
+#sheetIcon{
+  width:46px;height:46px;border-radius:12px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+}
+#sheetTitleWrap{flex:1;min-width:0;}
+#sheetCategory{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--c-orange-dark);}
+#sheetTitle{font-size:19px;font-weight:800;line-height:1.2;color:var(--c-ink);}
+#sheetClose{
+  width:40px;height:40px;border-radius:50%;border:none;background:var(--c-panel-2);color:#5b6b73;font-size:18px;flex:0 0 auto;
+}
+#sheetBody{overflow-y:auto;padding:0 16px 24px 16px;flex:1 1 auto;}
+.sheet-section{margin-top:14px;}
+.sheet-section h4{
+  font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#5b6b73;margin:0 0 8px 0;font-weight:700;
+}
+.attr-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.attr-card{
+  background:var(--c-panel-2);border-radius:12px;padding:10px 12px;border:1px solid var(--c-border);
+}
+.attr-card .lbl{font-size:11px;color:#5b6b73;text-transform:uppercase;letter-spacing:.03em;}
+.attr-card .val{font-size:16px;font-weight:700;color:var(--c-ink);margin-top:2px;}
+.attr-card.full{grid-column:1 / -1;}
+.note-box{
+  background:#fff7e0;border:1px solid #f0d98c;border-radius:12px;padding:10px 12px;font-size:13.5px;
+  line-height:1.4;color:#5a4a10;
+}
+.tag-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.tag-chip{
+  font-size:11.5px;font-weight:700;padding:5px 10px;border-radius:20px;background:#eef2f4;color:#33444d;
+}
+
+/* ============================================================
+   GLOSSARY MODAL
+   ============================================================ */
+#glossModal{
+  position:fixed;inset:0;z-index:2000;background:rgba(6,20,30,.6);
+  display:none;align-items:flex-end;justify-content:center;
+}
+#glossModal.show{display:flex;}
+#glossCard{
+  background:var(--c-panel);width:100%;max-width:720px;max-height:92vh;border-radius:20px 20px 0 0;
+  overflow-y:auto;padding:0 0 calc(var(--safe-b)+20px) 0;
+  animation:slideUp .28s cubic-bezier(.22,.94,.36,1);
+}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+#glossHead{
+  display:flex;align-items:center;justify-content:space-between;padding:18px 18px 8px 18px;position:sticky;top:0;background:var(--c-panel);
+}
+#glossHead h2{font-size:19px;margin:0;font-weight:800;}
+#glossBody{padding:8px 18px 4px 18px;}
+#glossBody p{font-size:14.5px;line-height:1.55;color:#33444d;}
+.gloss-term{margin-top:16px;padding:12px 14px;border-radius:12px;background:var(--c-panel-2);border:1px solid var(--c-border);}
+.gloss-term b{color:var(--c-bg);}
+.gloss-key{display:inline-block;width:14px;height:14px;border-radius:3px;margin-right:6px;vertical-align:-2px;}
+
+/* ============================================================
+   LAYER MANAGER
+   ============================================================ */
+#layerPanel{
+  position:fixed;inset:0;z-index:2000;background:rgba(6,20,30,.6);display:none;align-items:flex-end;justify-content:center;
+}
+#layerPanel.show{display:flex;}
+#layerCard{
+  background:var(--c-panel);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:0 0 calc(var(--safe-b)+16px) 0;
+  animation:slideUp .28s cubic-bezier(.22,.94,.36,1);max-height:80vh;overflow-y:auto;
+}
+.layer-row{
+  display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--c-border);min-height:var(--touch);
+}
+.layer-row .sw-icon{width:30px;height:30px;border-radius:8px;flex:0 0 auto;}
+.layer-row .lbl{flex:1;font-size:15.5px;font-weight:600;}
+.switch{position:relative;width:50px;height:30px;flex:0 0 auto;}
+.switch input{opacity:0;width:0;height:0;}
+.switch .track{position:absolute;inset:0;background:#ccd4d8;border-radius:30px;transition:.2s;}
+.switch .thumb{position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 4px rgba(0,0,0,.3);}
+.switch input:checked + .track{background:var(--c-orange);}
+.switch input:checked + .track + .thumb{transform:translateX(20px);}
+
+/* ============================================================
+   BASEMAP TOGGLE + ZOOM/GEO buttons
+   ============================================================ */
+.leaflet-control-zoom{display:none;}
+#geoBtn.tracking{color:var(--c-orange);}
+.pulse-dot{
+  width:14px;height:14px;border-radius:50%;background:#1e88e5;border:2px solid #fff;
+  box-shadow:0 0 0 4px rgba(30,136,229,.35);
+}
+
+/* ============================================================
+   MAP MARKERS / SVG SYMBOLS
+   ============================================================ */
+.vnf-icon{display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5));}
+.pk-label{
+  font-size:10px;font-weight:800;color:#0b2e45;background:rgba(255,255,255,.88);
+  padding:1px 5px;border-radius:6px;border:1px solid #0b2e45;white-space:nowrap;
+}
+.lock-chute-label{font-size:9.5px;font-weight:700;color:#fff;background:#0b2e45;padding:1px 4px;border-radius:5px;}
+
+/* Toast */
+#toast{
+  position:fixed;left:50%;bottom:calc(var(--safe-b)+24px);transform:translate(-50%,20px);
+  background:var(--c-ink);color:#fff;padding:10px 18px;border-radius:24px;font-size:13.5px;
+  z-index:3000;opacity:0;transition:.25s;pointer-events:none;
+}
+#toast.show{opacity:1;transform:translate(-50%,0);}
+
+/* Scrollbar thinning for panels */
+#sheetBody::-webkit-scrollbar,#glossCard::-webkit-scrollbar,#layerCard::-webkit-scrollbar,#searchResults::-webkit-scrollbar{width:4px;}
+#sheetBody::-webkit-scrollbar-thumb{background:#ccc;border-radius:4px;}
+
+@media (min-width:700px){
+  #searchResults, #glossCard, #layerCard{max-width:640px;left:auto;}
+}
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<!-- ============ TOP BAR ============ -->
+<div id="topbar">
+  <div id="searchWrap">
+    <svg id="searchIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input id="searchInput" type="text" placeholder="PK, écluse, bief, commune…" autocomplete="off" autocorrect="off" spellcheck="false">
+    <button id="searchClear" aria-label="Effacer">✕</button>
+  </div>
+  <button class="iconbtn" id="layersBtn" aria-label="Couches">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 8 12 14 22 8 12 2"/><polyline points="2 14 12 20 22 14"/><polyline points="2 11 12 17 22 11"/></svg>
+  </button>
+  <button class="iconbtn" id="glossBtn" aria-label="Glossaire">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+  </button>
+</div>
+
+<div id="searchResults"></div>
+
+<div id="rightControls">
+  <button class="iconbtn" id="zoomInBtn" aria-label="Zoom +">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
+  <button class="iconbtn" id="zoomOutBtn" aria-label="Zoom -">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
+  <button class="iconbtn" id="geoBtn" aria-label="Ma position">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+  </button>
+</div>
+
+<!-- ============ BOTTOM SHEET (fiche ouvrage) ============ -->
+<div id="bottomSheet">
+  <div id="sheetHandleZone"><div id="sheetHandle"></div></div>
+  <div id="sheetHeader">
+    <div id="sheetIcon"></div>
+    <div id="sheetTitleWrap">
+      <div id="sheetCategory">Catégorie</div>
+      <div id="sheetTitle">Nom de l'ouvrage</div>
+    </div>
+    <button id="sheetClose" aria-label="Fermer">✕</button>
+  </div>
+  <div id="sheetBody"></div>
+</div>
+
+<!-- ============ GLOSSAIRE MODAL ============ -->
+<div id="glossModal">
+  <div id="glossCard">
+    <div id="glossHead">
+      <h2>Glossaire &amp; rectangle de navigation</h2>
+      <button id="glossClose" class="iconbtn" aria-label="Fermer" style="box-shadow:none;background:var(--c-panel-2);">✕</button>
+    </div>
+    <div id="glossBody">
+      <p>Le <b>rectangle de navigation</b> représente le volume utile que doit occuper un bateau pour naviguer en toute sécurité, entre le fond du chenal et les ouvrages aériens (ponts, câbles).</p>
+      <div id="navSvgWrap" style="text-align:center;padding:8px 0;"></div>
+
+      <div class="gloss-term"><span class="gloss-key" style="background:#1e6ea0;"></span><b>Tirant d'eau</b> — hauteur immergée de la coque du bateau, du plan d'eau au point le plus bas (pied de pilote non compris). Détermine la profondeur minimale requise.</div>
+
+      <div class="gloss-term"><span class="gloss-key" style="background:#8e44ad;"></span><b>Pied de pilote</b> — marge de sécurité verticale conservée entre le fond du chenal et le point le plus bas de la coque, pour absorber les incertitudes de mouillage et le tassement.</div>
+
+      <div class="gloss-term"><span class="gloss-key" style="background:#2c7873;"></span><b>Mouillage « cible »</b> — profondeur d'eau garantie et entretenue par le gestionnaire de la voie (tirant d'eau max + pied de pilote), condition d'exploitation nominale.</div>
+
+      <div class="gloss-term"><span class="gloss-key" style="background:#e67e22;"></span><b>Tirant d'air</b> — hauteur de la partie émergée du bateau, du plan d'eau au point le plus haut (mâts, timonerie rabattue). Doit rester inférieur à la hauteur libre des ouvrages.</div>
+
+      <div class="gloss-term"><span class="gloss-key" style="background:#c0392b;"></span><b>Hauteur libre</b> — distance verticale entre le plan d'eau (au niveau normal d'exploitation) et le point le plus bas d'un obstacle aérien (pont, câble, voûte).</div>
+
+      <div class="gloss-term"><span class="gloss-key" style="background:#f7ca18;"></span><b>Chenal de navigation</b> — largeur et profondeur utiles du plan d'eau réservées au passage des bateaux, hors zones de faible profondeur ou d'obstacles.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ LAYER MANAGER ============ -->
+<div id="layerPanel">
+  <div id="layerCard">
+    <div id="glossHead">
+      <h2>Gestion des couches</h2>
+      <button id="layerClose" class="iconbtn" aria-label="Fermer" style="box-shadow:none;background:var(--c-panel-2);">✕</button>
+    </div>
+    <div id="layerList"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="./lib/leaflet/leaflet.js"></script>
+<script src="./data/export_2.js"></script>
+<script src="./data/export_3-2.js"></script>
+<script src="./data/SegmentationMarne_au_RhinMoselle_1-3.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>

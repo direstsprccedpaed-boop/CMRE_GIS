@@ -1,0 +1,25 @@
+{
+  "name": "sig-poche-uti-cmre-en",
+  "version": "1.0.0",
+  "description": "SIG de poche hors-ligne pour l'UTI CMRE-EN (VNF) — Leaflet + Capacitor",
+  "private": true,
+  "scripts": {
+    "prepare-www": "node scripts/prepare-www.js",
+    "cap:sync": "npx cap sync android",
+    "cap:add:android": "npx cap add android",
+    "cap:open:android": "npx cap open android",
+    "build:apk:debug": "cd android && ./gradlew assembleDebug",
+    "postinstall": "echo 'Placez leaflet.js/leaflet.css dans www/lib/leaflet et vos GeoJSON dans www/data avant npx cap sync'"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/geolocation": "^6.0.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
