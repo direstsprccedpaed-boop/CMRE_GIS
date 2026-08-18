@@ -28,13 +28,11 @@ jobs:
       - name: Récupérer le dépôt
         uses: actions/checkout@v6
 
-      - name: Installer Node.js
+            - name: Installer Node.js
         uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-          cache-dependency-path: package-lock.json
-
+          package-manager-cache: false
       - name: Vérifier les fichiers de configuration
         shell: bash
         run: |
