@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 400" width="100%" height="100%" style="background-color: #fbedd2; font-family: Arial, Helvetica, sans-serif;">
+  <defs>
+    <!-- Flèches de cotation précises -->
+    <marker id="arr-start" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 9 1.5 L 1 5 L 9 8.5 Z" fill="#000" />
+    </marker>
+    <marker id="arr-end" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 1 1.5 L 9 5 L 1 8.5 Z" fill="#000" />
+    </marker>
+  </defs>
+
+  <!-- Cadre principal -->
+  <rect x="5" y="5" width="610" height="390" fill="#fdedd6" stroke="#000" stroke-width="2" />
+
+  <!-- Voûte / Ouvrage supérieur (fond blanc) -->
+  <path d="M 86 208 C 86 80, 534 80, 534 208 Z" fill="#ffffff" />
+
+  <!-- Nappe d'eau (profil transversal cuvette) -->
+  <path d="M 86 208 C 110 270, 160 305, 310 305 C 460 305, 510 270, 534 208 Z" fill="#69c1ea" />
+
+  <!-- Fond et berges (terre brune / talus) -->
+  <path d="M 5 275 L 75 275 C 95 275, 90 225, 86 208 C 110 270, 160 305, 310 305 C 460 305, 510 270, 534 208 C 530 225, 525 275, 545 275 L 615 275 L 615 395 L 5 395 Z" fill="#db8145" stroke="#db8145" />
+
+  <!-- Ligne de flottaison globale -->
+  <line x1="86" y1="208" x2="534" y2="208" stroke="#5bb6dd" stroke-width="1.5" />
+
+  <!-- Signalisation supérieure (3 losanges) -->
+  <!-- Losange gauche : Rouge / Blanc -->
+  <g transform="translate(170, 36) rotate(45)">
+    <rect x="-18" y="-18" width="36" height="36" fill="#ffffff" stroke="#000" stroke-width="1.5" />
+    <path d="M -18 -18 L 0 -18 L 0 18 L -18 18 Z" fill="#c81313" />
+  </g>
+
+  <!-- Losange central : Jaune -->
+  <g transform="translate(310, 36) rotate(45)">
+    <rect x="-18" y="-18" width="36" height="36" fill="#fdd100" stroke="#000" stroke-width="1.5" />
+  </g>
+
+  <!-- Losange droit : Blanc / Rouge -->
+  <g transform="translate(450, 36) rotate(45)">
+    <rect x="-18" y="-18" width="36" height="36" fill="#ffffff" stroke="#000" stroke-width="1.5" />
+    <path d="M 0 -18 L 18 -18 L 18 18 L 0 18 Z" fill="#c81313" />
+  </g>
+
+  <!-- Rectangle de navigation (pointillé bleu) -->
+  <rect x="158" y="105" width="294" height="170" fill="none" stroke="#005ca9" stroke-width="2" stroke-dasharray="6,4" />
+  <text x="305" y="96" fill="#005ca9" font-size="15" font-weight="bold" text-anchor="middle">Rectangle de navigation</text>
+
+  <!-- BATEAU (Coupe transversale fidèle à l'original) -->
+  <g id="bateau">
+    <!-- Cale / Citerne centrale (partie noire avec fond arrondi) -->
+    <!-- Largeur : 236 à 374, fond plat avec arrondis aux bouchains -->
+    <path d="M 236 172 L 374 172 L 374 246 A 10 10 0 0 1 364 256 L 246 256 A 10 10 0 0 1 236 246 Z" fill="#202224" />
+
+    <!-- Bordés latéraux inclinés et plat-bord (coque blanche au-dessus du bouchain) -->
+    <!-- Flanc gauche blanc -->
+    <polygon points="236,192 236,172 264,152 264,159 243,174 243,192" fill="#ffffff" stroke="#202224" stroke-width="1.5" stroke-linejoin="round" />
+    <!-- Flanc droit blanc -->
+    <polygon points="374,192 374,172 346,152 346,159 367,174 367,192" fill="#ffffff" stroke="#202224" stroke-width="1.5" stroke-linejoin="round" />
+    <!-- Ligne de pont supérieur blanc -->
+    <path d="M 264 152 L 346 152 L 346 159 L 264 159 Z" fill="#ffffff" stroke="#202224" stroke-width="1.5" />
+
+    <!-- Cabine / Timonerie orange -->
+    <rect x="256" y="132" width="98" height="24" fill="#f18700" stroke="#1c1d1f" stroke-width="2" />
+    <!-- Casquette / Toit plat débordant -->
+    <rect x="247" y="121" width="116" height="11" fill="#f18700" stroke="#1c1d1f" stroke-width="2" />
+    
+    <!-- Deux fenêtres rectangulaires de timonerie -->
+    <rect x="264" y="136" width="37" height="14" fill="#a4e2f6" stroke="#1c1d1f" stroke-width="2" />
+    <rect x="309" y="136" width="37" height="14" fill="#a4e2f6" stroke="#1c1d1f" stroke-width="2" />
+  </g>
+
+  <!-- COTATIONS & FLÈCHES -->
+
+  <!-- Gauche : Tirant d'air -->
+  <line x1="68" y1="121" x2="247" y2="121" stroke="#000" stroke-width="1.2" />
+  <line x1="68" y1="208" x2="236" y2="208" stroke="#000" stroke-width="1.2" />
+  <line x1="72" y1="124" x2="72" y2="205" stroke="#000" stroke-width="1.5" marker-start="url(#arr-start)" marker-end="url(#arr-end)" />
+  <text x="59" y="157" font-size="13" font-weight="bold" text-anchor="end">
+    <tspan x="59" dy="0">Tirant</tspan>
+    <tspan x="59" dy="14">d'air</tspan>
+  </text>
+
+  <!-- Gauche : Tirant d'eau -->
+  <line x1="68" y1="256" x2="246" y2="256" stroke="#000" stroke-width="1.2" />
+  <line x1="72" y1="211" x2="72" y2="253" stroke="#000" stroke-width="1.5" marker-start="url(#arr-start)" marker-end="url(#arr-end)" />
+  <text x="59" y="230" font-size="13" font-weight="bold" text-anchor="end">
+    <tspan x="59" dy="0">Tirant</tspan>
+    <tspan x="59" dy="14">d'eau</tspan>
+  </text>
+
+  <!-- Droite : Hauteur libre -->
+  <line x1="452" y1="105" x2="542" y2="105" stroke="#000" stroke-width="1.2" />
+  <line x1="452" y1="208" x2="542" y2="208" stroke="#000" stroke-width="1.2" />
+  <line x1="538" y1="108" x2="538" y2="205" stroke="#000" stroke-width="1.5" marker-start="url(#arr-start)" marker-end="url(#arr-end)" />
+  <text x="550" y="148" font-size="13" font-weight="bold" text-anchor="start">
+    <tspan x="550" dy="0">Hauteur</tspan>
+    <tspan x="550" dy="14">libre</tspan>
+  </text>
+
+  <!-- Droite : Mouillage -->
+  <line x1="452" y1="275" x2="542" y2="275" stroke="#000" stroke-width="1.2" />
+  <line x1="538" y1="211" x2="538" y2="272" stroke="#000" stroke-width="1.5" marker-start="url(#arr-start)" marker-end="url(#arr-end)" />
+  <text x="525" y="244" font-size="13" font-weight="bold" text-anchor="start">
+    <tspan x="525" dy="0">Mouillage</tspan>
+  </text>
+
+  <!-- Centre bas : Pied de pilote -->
+  <line x1="364" y1="256" x2="425" y2="256" stroke="#000" stroke-width="1.2" />
+  <line x1="398" y1="258" x2="398" y2="272" stroke="#000" stroke-width="1.5" marker-start="url(#arr-start)" marker-end="url(#arr-end)" />
+  <text x="398" y="293" font-size="12" font-weight="bold" text-anchor="middle">
+    <tspan x="398" dy="0">Pied de</tspan>
+    <tspan x="398" dy="13">pilote</tspan>
+  </text>
+
+  <!-- Bas : Chenal de navigation -->
+  <line x1="158" y1="275" x2="158" y2="370" stroke="#000" stroke-width="1.2" />
+  <line x1="452" y1="275" x2="452" y2="370" stroke="#000" stroke-width="1.2" />
+  <line x1="161" y1="363" x2="449" y2="363" stroke="#000" stroke-width="1.5" marker-start="url(#arr-start)" marker-end="url(#arr-end)" />
+  <text x="305" y="354" font-size="13" font-weight="bold" text-anchor="middle">Chenal de navigation</text>
+</svg>
