@@ -5,19 +5,16 @@ on:
     branches:
       - main
       - master
+
   pull_request:
     branches:
       - main
       - master
+
   workflow_dispatch:
 
 permissions:
   contents: read
-
-env:
-  NODE_VERSION: '22'
-  JAVA_VERSION: '17'
-  CAPACITOR_ANDROID_DIR: android
 
 jobs:
   build-debug-apk:
@@ -25,18 +22,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Récupérer le dépôt
+      - name: Checkout du dépôt
         uses: actions/checkout@v6
 
-            - name: Installer Node.js
+      - name: Installer Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: '22'
           package-manager-cache: false
-      - name: Vérifier les fichiers de configuration
+
+      - name: Vérifier les fichiers requis
         shell: bash
         run: |
-          set -euo pipefail
+          set -e
           test -f package.json
           test -f package-lock.json
           test -f capacitor.config.ts
@@ -48,6 +46,7 @@ jobs:
           test -f www/data/export_2.js
           test -f www/data/export_3.js
           test -f www/data/SegmentationMarne_au_RhinMoselle_1.js
+          echo "Tous les fichiers requis sont présents."
 
       - name: Installer les dépendances npm
         run: npm ci
@@ -56,70 +55,74 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: ${{ env.JAVA_VERSION }}
+          java-version: '17'
           cache: gradle
 
-      - name: Vérifier la préparation du dossier www
+      - name: Préparer www
         run: npm run prepare-www
 
-      - name: Vérifier les références HTML et le code chargé
+      - name: Vérifier index.html
         shell: bash
         run: |
-          set -euo pipefail
-          grep -q 'src="./lib/leaflet/leaflet.js"' www/index.html
-          grep -q 'src="./data/export_2.js"' www/index.html
-          grep -q 'src="./data/export_3.js"' www/index.html
-          grep -q 'src="./data/SegmentationMarne_au_RhinMoselle_1.js"' www/index.html
-          grep -q 'src="./app.js"' www/index.html
-          grep -q 'rectangle-navigation-bateau' www/app.js
-          echo 'Références web validées.'
+          set -e
+          grep -Fq 'src="./lib/leaflet/leaflet.js"' www/index.html
+          grep -Fq 'src="./data/export_2.js"' www/index.html
+          grep -Fq 'src="./data/export_3.js"' www/index.html
+          grep -Fq 'src="./data/SegmentationMarne_au_RhinMoselle_1.js"' www/index.html
+          grep -Fq 'src="./app.js"' www/index.html
+          echo "Références index.html validées."
+
+      - name: Vérifier app.js et SVG
+        shell: bash
+        run: |
+          set -e
+          grep -Fq 'rectangle-navigation-bateau' www/app.js
+          test -f www/icons/rectangle-navigation-bateau.svg
+          echo "app.js et SVG validés."
 
       - name: Ajouter Android si nécessaire
         shell: bash
         run: |
-          set -euo pipefail
-          if [ ! -d "${CAPACITOR_ANDROID_DIR}" ]; then
+          set -e
+          if [ ! -d android ]; then
             npx cap add android
           fi
 
-      - name: Synchroniser les ressources web vers Android
+      - name: Synchroniser Capacitor
         run: npx cap sync android
 
-      - name: Vérifier les ressources copiées dans Android
+      - name: Vérifier les fichiers Android copiés
         shell: bash
         run: |
-          set -euo pipefail
-          PUBLIC_DIR="android/app/src/main/assets/public"
-          test -f "$PUBLIC_DIR/index.html"
-          test -f "$PUBLIC_DIR/app.js"
-          test -f "$PUBLIC_DIR/icons/rectangle-navigation-bateau.svg"
-          test -f "$PUBLIC_DIR/data/export_2.js"
-          test -f "$PUBLIC_DIR/data/export_3.js"
-          test -f "$PUBLIC_DIR/data/SegmentationMarne_au_RhinMoselle_1.js"
-          grep -q 'rectangle-navigation-bateau' "$PUBLIC_DIR/app.js"
-          echo 'Ressources web correctement copiées dans Android.'
+          set -e
+          test -f android/app/src/main/assets/public/index.html
+          test -f android/app/src/main/assets/public/app.js
+          test -f android/app/src/main/assets/public/icons/rectangle-navigation-bateau.svg
+          test -f android/app/src/main/assets/public/data/export_2.js
+          test -f android/app/src/main/assets/public/data/export_3.js
+          test -f android/app/src/main/assets/public/data/SegmentationMarne_au_RhinMoselle_1.js
+          grep -Fq 'rectangle-navigation-bateau' android/app/src/main/assets/public/app.js
+          echo "Ressources Android validées."
 
-      - name: Préparer Gradle
-        shell: bash
+      - name: Donner les droits à Gradle
         run: chmod +x android/gradlew
 
-      - name: Nettoyer et compiler l'APK debug
+      - name: Compiler l'APK debug
         working-directory: android
         run: ./gradlew clean assembleDebug --no-daemon --stacktrace
 
-      - name: Vérifier l'APK produit
+      - name: Vérifier l'APK
         shell: bash
         run: |
-          set -euo pipefail
-          APK="android/app/build/outputs/apk/debug/app-debug.apk"
-          test -s "$APK"
-          sha256sum "$APK"
-          ls -lh "$APK"
+          set -e
+          test -s android/app/build/outputs/apk/debug/app-debug.apk
+          ls -lh android/app/build/outputs/apk/debug/app-debug.apk
+          sha256sum android/app/build/outputs/apk/debug/app-debug.apk
 
-      - name: Publier l'APK debug
+      - name: Publier l'APK
         uses: actions/upload-artifact@v4
         with:
-          name: sig-poche-uti-cmre-en-debug-apk-${{ github.run_number }}
+          name: sig-poche-uti-cmre-en-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
