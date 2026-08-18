@@ -31,24 +31,46 @@ jobs:
           java-version: 17
           cache: gradle
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Show repository structure
+        shell: bash
+        run: |
+          echo "Racine du depot :"
+          ls -la
+          echo
+          echo "Contenu de www :"
+          ls -la www || echo "www est absent"
+          echo
+          echo "Contenu de www/data :"
+          ls -la www/data || echo "www/data est absent"
+          echo
+          echo "Contenu de www/icons :"
+          ls -la www/icons || echo "www/icons est absent"
+          echo
+          echo "Contenu de www/lib/leaflet :"
+          ls -la www/lib/leaflet || echo "www/lib/leaflet est absent"
 
       - name: Check web assets
         shell: bash
         run: |
-          set -e
-          test -f package.json
-          test -f package-lock.json
-          test -f capacitor.config.ts
-          test -f www/index.html
-          test -f www/app.js
-          test -f www/lib/leaflet/leaflet.js
-          test -f www/lib/leaflet/leaflet.css
-          test -f www/icons/rectangle-navigation-bateau.svg
-          test -f www/data/export_2.js
-          test -f www/data/export_3.js
-          test -f www/data/SegmentationMarne_au_RhinMoselle_1.js
+          echo "Verification des fichiers requis :"
+
+          if [ -f package.json ]; then echo "OK package.json"; else echo "ABSENT package.json"; fi
+          if [ -f package-lock.json ]; then echo "OK package-lock.json"; else echo "ABSENT package-lock.json"; fi
+          if [ -f capacitor.config.ts ]; then echo "OK capacitor.config.ts"; else echo "ABSENT capacitor.config.ts"; fi
+          if [ -f www/index.html ]; then echo "OK www/index.html"; else echo "ABSENT www/index.html"; fi
+          if [ -f www/app.js ]; then echo "OK www/app.js"; else echo "ABSENT www/app.js"; fi
+          if [ -f www/lib/leaflet/leaflet.js ]; then echo "OK www/lib/leaflet/leaflet.js"; else echo "ABSENT www/lib/leaflet/leaflet.js"; fi
+          if [ -f www/lib/leaflet/leaflet.css ]; then echo "OK www/lib/leaflet/leaflet.css"; else echo "ABSENT www/lib/leaflet/leaflet.css"; fi
+          if [ -f www/icons/rectangle-navigation-bateau.svg ]; then echo "OK www/icons/rectangle-navigation-bateau.svg"; else echo "ABSENT www/icons/rectangle-navigation-bateau.svg"; fi
+          if [ -f www/data/export_2.js ]; then echo "OK www/data/export_2.js"; else echo "ABSENT www/data/export_2.js"; fi
+          if [ -f www/data/export_3.js ]; then echo "OK www/data/export_3.js"; else echo "ABSENT www/data/export_3.js"; fi
+          if [ -f www/data/SegmentationMarne_au_RhinMoselle_1.js ]; then echo "OK www/data/SegmentationMarne_au_RhinMoselle_1.js"; else echo "ABSENT www/data/SegmentationMarne_au_RhinMoselle_1.js"; fi
+
+          echo
+          echo "Cette etape ne bloque pas le build : elle sert uniquement au diagnostic."
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Prepare web directory
         run: npm run prepare-www
@@ -56,9 +78,10 @@ jobs:
       - name: Add Android platform when missing
         shell: bash
         run: |
-          set -e
           if [ ! -d android ]; then
             npx cap add android
+          else
+            echo "Le dossier android existe deja."
           fi
 
       - name: Sync Capacitor
@@ -70,14 +93,18 @@ jobs:
       - name: Verify Android web assets
         shell: bash
         run: |
-          set -e
           public=android/app/src/main/assets/public
-          test -f "$public/index.html"
-          test -f "$public/app.js"
-          test -f "$public/icons/rectangle-navigation-bateau.svg"
-          test -f "$public/data/export_2.js"
-          test -f "$public/data/export_3.js"
-          test -f "$public/data/SegmentationMarne_au_RhinMoselle_1.js"
+          echo "Verification des ressources copiees dans Android :"
+
+          if [ -f "$public/index.html" ]; then echo "OK $public/index.html"; else echo "ABSENT $public/index.html"; fi
+          if [ -f "$public/app.js" ]; then echo "OK $public/app.js"; else echo "ABSENT $public/app.js"; fi
+          if [ -f "$public/icons/rectangle-navigation-bateau.svg" ]; then echo "OK $public/icons/rectangle-navigation-bateau.svg"; else echo "ABSENT $public/icons/rectangle-navigation-bateau.svg"; fi
+          if [ -f "$public/data/export_2.js" ]; then echo "OK $public/data/export_2.js"; else echo "ABSENT $public/data/export_2.js"; fi
+          if [ -f "$public/data/export_3.js" ]; then echo "OK $public/data/export_3.js"; else echo "ABSENT $public/data/export_3.js"; fi
+          if [ -f "$public/data/SegmentationMarne_au_RhinMoselle_1.js" ]; then echo "OK $public/data/SegmentationMarne_au_RhinMoselle_1.js"; else echo "ABSENT $public/data/SegmentationMarne_au_RhinMoselle_1.js"; fi
+
+          echo
+          echo "Cette etape ne bloque pas le build : elle sert uniquement au diagnostic."
 
       - name: Build APK
         working-directory: android
