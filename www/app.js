@@ -115,7 +115,7 @@ function enhanceTooltipWithCommune(marker, cacheKey, lon, lat, baseLabel) {
   if (window.CommuneResolver.isReady()) {
     applyLabel(window.CommuneResolver.resolveForFeature(cacheKey, lon, lat, null));
   } else {
-    ().then(function () {
+    window.CommuneResolver.ready().then(function () {
       applyLabel(window.CommuneResolver.resolveForFeature(cacheKey, lon, lat, null));
     }).catch(function () {});
   }
@@ -180,7 +180,7 @@ try {
     attribution: "&copy; OpenStreetMap contributors — Donnees voies navigables : VNF / OSM / IGN BD TOPO / Sandre BD Topage / Etalab (contours communaux)"
   }).addTo(map);
   if (window.VNFDataset) { window.VNFDataset.ready().catch(function () {}); }
-  if (window.CommuneResolver) { ().catch(function () {}); }
+  if (window.CommuneResolver) { window.CommuneResolver.ready().catch(function () {}); }
 } catch (fatalMapError) {
   console.error("Erreur fatale a l'initialisation de la carte:", fatalMapError);
   const overlay = document.createElement("div");
