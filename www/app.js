@@ -115,7 +115,7 @@ function enhanceTooltipWithCommune(marker, cacheKey, lon, lat, baseLabel) {
   if (window.CommuneResolver.isReady()) {
     applyLabel(window.CommuneResolver.resolveForFeature(cacheKey, lon, lat, null));
   } else {
-    window.CommuneResolver.ready().then(function () {
+    ().then(function () {
       applyLabel(window.CommuneResolver.resolveForFeature(cacheKey, lon, lat, null));
     }).catch(function () {});
   }
@@ -179,7 +179,8 @@ try {
     maxZoom: 19,
     attribution: "&copy; OpenStreetMap contributors — Donnees voies navigables : VNF / OSM / IGN BD TOPO / Sandre BD Topage / Etalab (contours communaux)"
   }).addTo(map);
-  if (window.CommuneResolver) { window.CommuneResolver.ready().catch(function () {}); }
+  if (window.VNFDataset) { window.VNFDataset.ready().catch(function () {}); }
+  if (window.CommuneResolver) { ().catch(function () {}); }
 } catch (fatalMapError) {
   console.error("Erreur fatale a l'initialisation de la carte:", fatalMapError);
   const overlay = document.createElement("div");
@@ -551,12 +552,26 @@ function openWaterwaySheet(props, st, geometry, cacheKey) {
   const maxheight = getTag(props, KEYS.maxheight);
   const maxwidth = getTag(props, KEYS.maxwidth);
   const width = getTag(props, KEYS.width);
+  let cemtOfficialHtml = "";
+if (window.VNFDataset && window.VNFDataset.isReady() && cemt) {
+  const profile = window.VNFDataset.cemtProfile(cemt);
+  if (profile) {
+    cemtOfficialHtml = "<div class=\"sheet-section\"><h4>Profil CEMT officiel (VNF 2018)</h4><div class=\"attr-grid\">" +
+      attrCard("Longueur max (m)", profile.longueur_m) +
+      attrCard("Largeur max (m)", profile.largeur_m) +
+      attrCard("Enfoncement (m)", profile.enfoncement_m) +
+      attrCard("Tirant d'air max (m)", profile.tirant_air_m) +
+      attrCard("Tonnage (t)", profile.tonnage_t) +
+      "</div></div>";
+  }
+}
   const note = getTag(props, KEYS.note) || getTag(props, KEYS.description);
   const staticHtml =
     "<div class=\"sheet-section\"><h4>Classification</h4><div class=\"tag-row\"><span class=\"tag-chip\" style=\"background:" + st.color + "22;color:" + st.color + "\">" + escapeHtml(st.label) + "</span></div></div>" +
     "<div class=\"sheet-section\"><h4>Caracteristiques de gabarit</h4><div class=\"attr-grid\">" +
     attrCard("Classe CEMT", cemt) + attrCard("Largeur (m)", width) + attrCard("Tirant d'eau max (m)", maxdraft) + attrCard("Tirant d'air max (m)", maxheight) + attrCard("Largeur navigable max (m)", maxwidth) +
     "</div></div>" +
+    cemtOfficialHtml +
     (note ? ("<div class=\"sheet-section\"><h4>Notes</h4><div class=\"note-box\">" + escapeHtml(note) + "</div></div>") : "");
   withCommuneSection(sheetBody, cacheKey || null, null, null, geometry || null, staticHtml);
   openSheet();
@@ -603,6 +618,17 @@ function openPointSheet(props, cat, cacheKey, lon, lat) {
   } else {
     bodyHtml += "<div class=\"sheet-section\"><h4>Informations</h4><div class=\"attr-grid\">" + attrCard("Gestionnaire", operatorTag) + attrCard("Horaires", openingHours) + "</div></div>";
   }
+  if (window.VNFDataset && window.VNFDataset.isReady() && (cat === "quai_commerce" || cat === "port_plaisance")) {
+  const portInfo = window.VNFDataset.portInfoForName(name);
+  if (portInfo) {
+    bodyHtml += "<div class=\"sheet-section\"><h4>Port officiel VNF</h4><div class=\"attr-grid\">" +
+      attrCard("Gestionnaire", portInfo.operator) +
+      attrCard("Adresse", portInfo.address, true) +
+      attrCard("Téléphone", portInfo.phone) +
+      attrCard("Email", portInfo.email) +
+      "</div></div>";
+  }
+}
   if (note) bodyHtml += "<div class=\"sheet-section\"><h4>Notes d'exploitation</h4><div class=\"note-box\">" + escapeHtml(note) + "</div></div>";
   if (addrCity) {
     bodyHtml += "<div class=\"sheet-section\"><h4>Localisation</h4><div class=\"attr-grid\">" + attrCard("Commune", addrCity, true) + "</div></div>";
