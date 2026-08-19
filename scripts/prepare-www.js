@@ -12,6 +12,8 @@ const required = [
   'data/SegmentationMarne_au_RhinMoselle_1.js',
   'communeResolver.js',
   'data/communes.geojson',
+  'vnfDataset.js',
+  'data/VNF_NordEst_Rhin_dataset.json',
 ];
 
 let missing = [];
