@@ -57,6 +57,8 @@ jobs:
           if [ -f www/data/export_3.js ]; then echo "OK www/data/export_3.js"; else echo "ABSENT www/data/export_3.js"; fi
           if [ -f www/data/SegmentationMarne_au_RhinMoselle_1.js ]; then echo "OK www/data/SegmentationMarne_au_RhinMoselle_1.js"; else echo "ABSENT www/data/SegmentationMarne_au_RhinMoselle_1.js"; fi
           if [ -f www/data/communes.geojson ]; then echo "OK www/data/communes.geojson"; else echo "ABSENT www/data/communes.geojson (executez node build-communes.mjs puis copiez le resultat)"; fi
+          if [ -f www/vnfDataset.js ]; then echo "OK www/vnfDataset.js"; else echo "ABSENT www/vnfDataset.js"; fi
+          if [ -f www/data/VNF_NordEst_Rhin_dataset.json ]; then echo "OK www/data/VNF_NordEst_Rhin_dataset.json"; else echo "ABSENT www/data/VNF_NordEst_Rhin_dataset.json"; fi
           echo
           echo "Cette etape ne bloque pas le build : elle sert uniquement au diagnostic."
 
@@ -94,6 +96,8 @@ jobs:
           if [ -f "$public/data/export_3.js" ]; then echo "OK $public/data/export_3.js"; else echo "ABSENT $public/data/export_3.js"; fi
           if [ -f "$public/data/SegmentationMarne_au_RhinMoselle_1.js" ]; then echo "OK $public/data/SegmentationMarne_au_RhinMoselle_1.js"; else echo "ABSENT $public/data/SegmentationMarne_au_RhinMoselle_1.js"; fi
           if [ -f "$public/data/communes.geojson" ]; then echo "OK $public/data/communes.geojson"; else echo "ABSENT $public/data/communes.geojson"; fi
+          if [ -f www/vnfDataset.js ]; then echo "OK www/vnfDataset.js"; else echo "ABSENT www/vnfDataset.js"; fi
+          if [ -f www/data/VNF_NordEst_Rhin_dataset.json ]; then echo "OK www/data/VNF_NordEst_Rhin_dataset.json"; else echo "ABSENT www/data/VNF_NordEst_Rhin_dataset.json"; fi
           echo
           echo "Cette etape ne bloque pas le build : elle sert uniquement au diagnostic."
 
