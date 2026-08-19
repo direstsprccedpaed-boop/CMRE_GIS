@@ -1,0 +1,107 @@
+{
+  "source": "VNF - Les voies navigables des bassins Nord-Est et Rhin - edition 2018, mise a jour novembre 2018",
+  "legend": {
+    "route_profile_fields": ["voie_eau_concernee", "limites_geographiques", "distance_km", "hauteur_libre_m", "mouillage_cible_m", "nombre_ecluses", "longueur_utile_ouvrages_m", "largeur_utile_ouvrages_m", "gabarit_CEMT"],
+    "navigation_rectangle": ["tirant_d_air", "hauteur_libre", "tirant_d_eau", "mouillage", "pied_de_pilote", "chenal_de_navigation"],
+    "symbols": [
+      "Ecluse VNF", "Ecluse non VNF", "Origine de distance confluence/confluence", "Distance confluence/confluence", "Limite de pas de 10 km", "Longueur de voie d'eau", "Hauteur libre, mouillage", "Voie d'eau non navigable", "Bassin de navigation Nord-Est et Rhin", "Limite Port Autonome", "Préfecture de région", "Préfecture de département", "Sous-Préfecture", "Autre commune", "Frontière", "Limite de région", "Limite de département", "Limite de commune", "Port ou quai de commerce public", "Port ou quai de commerce privé", "Accès ferroviaire", "Colis lourds", "Conteneurs", "Rampe Ro-Ro", "Terminal relié AP+", "Port de plaisance", "Halte de plaisance", "Ouvrage d'art singulier", "Pont classé monument historique", "Souterrain, tunnel, voûte", "Bassin de virement", "Plan incliné", "Ligne ferroviaire classique", "Ligne ferroviaire à grande vitesse", "Autoroute", "Route nationale ou départementale"
+    ]
+  },
+  "cemt_profiles": [
+    {"class":"0*","longueur_m":null,"largeur_m":null,"enfoncement_m":null,"tirant_air_m":null,"tonnage_t":null,"note":"* Non accessible a la navigation de commerce"},
+    {"class":"1","longueur_m":"38.50","largeur_m":"5.05","enfoncement_m":"1.8-2.2","tirant_air_m":"4","tonnage_t":"250-400"},
+    {"class":"2","longueur_m":"50-55","largeur_m":"6.6","enfoncement_m":"2.5","tirant_air_m":"4-5","tonnage_t":"400-650"},
+    {"class":"3","longueur_m":"67-80","largeur_m":"8.2","enfoncement_m":"2.5","tirant_air_m":"4-5","tonnage_t":"650-1000"},
+    {"class":"4","longueur_m":"80-85","largeur_m":"9.5","enfoncement_m":"2.5-4.5","tirant_air_m":"5.25-7","tonnage_t":"1000-1500"},
+    {"class":"5","longueur_m":"95-185","largeur_m":"11.4","enfoncement_m":"2.5-4.5","tirant_air_m":"5.25-9.1","tonnage_t":"1500-3200"},
+    {"class":"6","longueur_m":"95-200","largeur_m":"22.8-34.2","enfoncement_m":"2.5-4.5","tirant_air_m":"9.1","tonnage_t":"3200-18000"},
+    {"class":"7","longueur_m":"195-285","largeur_m":"34.2","enfoncement_m":"2.5-4.5","tirant_air_m":"9.1","tonnage_t":"14500-27000"}
+  ],
+  "validated_route_profiles": [
+    {"name":"Seneffe - Nimy","distance_km":24.3,"hauteur_libre_m":4.95,"mouillage_cible_m":2.5,"ecluses":2,"ecluse_longueur_m":92.0,"ecluse_largeur_m":12.0},
+    {"name":"Nimy-Blaton-Peronnes","distance_km":38.9,"hauteur_libre_m":4.95,"mouillage_cible_m":2.5,"ecluses":2,"ecluse_longueur_m":86.0,"ecluse_largeur_m":12.0,"special":"1 ascenseur; L 112.00 m; l 12.00 m"},
+    {"name":"Branche de Ronquieres","distance_km":37.0,"hauteur_libre_m":6.30,"mouillage_cible_m":3.0,"ecluses":2,"ecluse_longueur_m":136.0,"ecluse_largeur_m":12.5},
+    {"name":"Basse Sambre - Monceau-s-Sambre - Namur","distance_km":53.3,"hauteur_libre_m":4.20,"mouillage_cible_m":2.60,"ecluses":8,"ecluse_longueur_m":11.90,"ecluse_largeur_m":12.50},
+    {"name":"Haute Sambre - Frontiere francaise - Monceau-s-Sambre","distance_km":46.3,"hauteur_libre_m":5.22,"mouillage_cible_m":2.50,"ecluses":9,"ecluse_longueur_m":98.0,"ecluse_largeur_m":11.8},
+    {"name":"Frontiere franco-belge - Givet","distance_km":2.0,"hauteur_libre_m":3.0,"ecluses":1,"ecluse_longueur_m":100.0,"ecluse_largeur_m":12.0},
+    {"name":"Givet - Les 3 Fontaines","distance_km":5.0,"hauteur_libre_m":6.0,"mouillage_cible_m":2.75},
+    {"name":"Les 3 Fontaines - Verdun","distance_km":189.0,"hauteur_libre_m":3.80,"mouillage_cible_m":2.20,"ecluses":39,"ecluse_longueur_m":47.5,"ecluse_largeur_m":5.7},
+    {"name":"Verdun - Troussey","distance_km":76.0,"hauteur_libre_m":3.60,"mouillage_cible_m":2.20,"ecluses":19,"ecluse_longueur_m":39.0,"ecluse_largeur_m":5.2},
+    {"name":"Pont-a-Bar - Vieux-les-Asfeld","distance_km":99.0,"hauteur_libre_m":3.70,"mouillage_cible_m":2.20,"ecluses":47,"ecluse_longueur_m":39.0,"ecluse_largeur_m":5.2},
+    {"name":"Frouard - Neuves-Maisons","distance_km":46.7,"hauteur_libre_m":5.10,"mouillage_cible_m":3.00,"ecluses":6,"ecluse_longueur_m":176.0,"ecluse_largeur_m":12.0},
+    {"name":"Apach - Metz","distance_km":54.0,"hauteur_libre_m":6.16,"mouillage_cible_m":3.00,"ecluses":6,"ecluse_longueur_m":176.0,"ecluse_largeur_m":12.0},
+    {"name":"Metz - Custines","distance_km":49.0,"hauteur_libre_m":5.29,"mouillage_cible_m":3.00,"ecluses":4,"ecluse_longueur_m":176.0,"ecluse_largeur_m":12.0},
+    {"name":"Apach - Frouard","distance_km":105.0,"hauteur_libre_m":5.10,"mouillage_cible_m":3.00,"ecluses":10,"ecluse_longueur_m":176.0,"ecluse_largeur_m":12.0},
+    {"name":"Frouard - Lutzelbourg","distance_km":105.0,"hauteur_libre_m":3.60,"mouillage_cible_m":2.20,"ecluses":34,"ecluse_longueur_m":39.0,"ecluse_largeur_m":5.2},
+    {"name":"Lutzelbourg - Strasbourg","distance_km":54.0,"hauteur_libre_m":3.60,"mouillage_cible_m":2.60,"ecluses":23,"ecluse_longueur_m":39.0,"ecluse_largeur_m":5.2},
+    {"name":"Strasbourg - Erstein","distance_km":18.0,"hauteur_libre_m":3.65,"mouillage_cible_m":2.40,"ecluses":6,"ecluse_longueur_m":38.7,"ecluse_largeur_m":5.1},
+    {"name":"Erstein - Rhinau","distance_km":20.0,"hauteur_libre_m":3.65,"mouillage_cible_m":2.20,"ecluses":6,"ecluse_longueur_m":38.7,"ecluse_largeur_m":5.1},
+    {"name":"Vitry-le-Francois - Saint-Dizier","distance_km":30.0,"hauteur_libre_m":3.70,"mouillage_cible_m":2.20,"ecluses":14,"ecluse_longueur_m":39.0,"ecluse_largeur_m":5.2},
+    {"name":"St-Dizier - Heuilley-Cotton","distance_km":130.0,"hauteur_libre_m":3.45,"mouillage_cible_m":2.20,"ecluses":57,"ecluse_longueur_m":39.0,"ecluse_largeur_m":5.2},
+    {"name":"Heuilley-Cotton - Maxilly-sur-Saone","distance_km":64.0,"hauteur_libre_m":3.55,"mouillage_cible_m":2.20,"ecluses":43,"ecluse_largeur_m":5.2},
+    {"name":"Vitry-le-Francois - Heuilley-s-Saone","distance_km":224.0,"hauteur_libre_m":3.50,"mouillage_cible_m":2.20,"ecluses":114,"ecluse_longueur_m":38.5,"ecluse_largeur_m":5.05},
+    {"name":"Gondrexange - Sarreguemines","distance_km":64.0,"hauteur_libre_m":3.70,"mouillage_cible_m":2.00,"ecluses":27,"ecluse_longueur_m":38.5,"ecluse_largeur_m":5.05},
+    {"name":"Messein - Corre","distance_km":121.5,"hauteur_libre_m":3.45,"mouillage_cible_m":2.20,"ecluses":93,"ecluse_longueur_m":39.0,"ecluse_largeur_m":5.2},
+    {"name":"Corre - ecluse de Gray-s-Saone","distance_km":99.0,"hauteur_libre_m":3.50,"mouillage_cible_m":2.00,"ecluses":15,"ecluse_longueur_m":38.5,"ecluse_largeur_m":5.05},
+    {"name":"Mulhouse - Niffer","distance_km":15.7,"hauteur_libre_m":6.95,"mouillage_cible_m":4.00},
+    {"name":"Huningue - Rhinau / Rhin et Grand Canal d'Alsace","distance_km":88.0,"hauteur_libre_m":7.00,"mouillage_cible_m":3.00},
+    {"name":"Lutzelbourg - Strasbourg","distance_km":54.0,"hauteur_libre_m":3.60,"mouillage_cible_m":2.60,"ecluses":23,"ecluse_longueur_m":39.0,"ecluse_largeur_m":5.2}
+  ],
+  "special_route_values": [
+    {"label":"Lutzelbourg - Strasbourg","distance_km":54,"hauteur_libre_m":3.60,"mouillage_cible_m":2.60},
+    {"label":"Rhinau - Strasbourg","distance_km":105,"hauteur_libre_m":3.60,"mouillage_cible_m":2.20},
+    {"label":"Plobsheim / secteur Rhinau-Strasbourg","distance_km":39,"hauteur_libre_m":6.75,"mouillage_cible_m":3.00,"note":"annotation * PHEN preservee telle quelle"},
+    {"label":"Secteur Reichstett","distance_km":56,"hauteur_libre_m":9.10,"mouillage_cible_m":3.00,"note":"annotations * PHEN et ** preservees telles quelles"},
+    {"label":"Secteur Sarre - Sarreguemines","distance_km":63.4,"note":"valeur de longueur / repere presentee sur la carte"},
+    {"label":"Secteur Saone","distance_km":171,"note":"longueur de voie d'eau / repere present sur la carte"}
+  ],
+  "lock_series_examples": [
+    {"locks":6,"length_m":185,"width_m":12},
+    {"locks":6,"length_m":176,"width_m":12},
+    {"locks":10,"length_m":176,"width_m":12},
+    {"locks":4,"length_m":176,"width_m":12},
+    {"locks":1,"length_m":120,"width_m":12},
+    {"locks":18,"length_m":39,"width_m":5.2},
+    {"locks":23,"length_m":39,"width_m":5.2},
+    {"locks":34,"length_m":39,"width_m":5.2},
+    {"locks":57,"length_m":39,"width_m":5.2},
+    {"locks":74,"length_m":38.5,"width_m":5.1},
+    {"locks":97,"length_m":39,"width_m":5.2},
+    {"locks":114,"length_m":38.5,"width_m":5.05},
+    {"locks":189,"length_m":38.5,"width_m":5.0},
+    {"locks":9,"length_m":40.47,"width_m":5.15},
+    {"locks":2,"length_m":86,"width_m":12},
+    {"locks":2,"length_m":92,"width_m":12},
+    {"locks":2,"length_m":136,"width_m":12.5},
+    {"locks":9,"length_m":98,"width_m":11.8},
+    {"locks":8,"length_m":11.9,"width_m":12.5}
+  ],
+  "canal_special_structures": [
+    "Plan incliné",
+    "Ascenseur / plan incliné de Strépy-Thieu",
+    "Pont canal",
+    "Ouvrage d'art singulier",
+    "Pont classé monument historique",
+    "Souterrain, tunnel, voûte",
+    "Bassin de virement",
+    "Suite d'écluses"
+  ],
+  "public_commercial_ports": [
+    {"name":"Port public de Nancy-Frouard","operator":"CCI 54","address":"53 rue Stanislas, 54000 Nancy cedex","phone":"03 83 85 54 54","email":"cci@nancy.cci.fr"},
+    {"name":"Port public du Nouveau Port de Metz","operator":"CFNR TRANSPORT SAS","address":"Port public BP 30, 57270 Uckange","phone":"03 82 86 55 20","email":"info-transports@fr.rhenus.com"},
+    {"name":"Port public de Metz-Mazerolle","operator":"CFNR TRANSPORT SAS","address":"Port public BP 30, 57270 Uckange","phone":"03 82 86 55 20","email":"info-transports@fr.rhenus.com"},
+    {"name":"Port public de Thionville-Illange","operator":"CFNR TRANSPORT SAS","address":"Port public BP 30, 57270 Uckange","phone":"03 82 86 55 20","email":"info-transports@fr.rhenus.com"},
+    {"name":"Port public de Givet","operator":"CCI 08","address":"18A avenue Georges Corneau, 08004 Charleville-Mézières cedex","phone":"03 24 56 62 62","email":"cci@ardennes.cci.fr"},
+    {"name":"Port Autonome de Strasbourg","address":"25 rue de la Nuée Bleue, CS 80407, 67002 Strasbourg cedex","phone":"03 88 21 74 74","email":"pas@strasbourg.port.fr","website":"www.strasbourg.port.fr"},
+    {"name":"Port Rhénan Colmar / Neuf-Brisach","address":"Zone Portuaire, 68600 Volgelsheim","phone":"03 89 72 56 00","email":"port-rhenan@colmar.cci.fr","website":"www.port-rhenan-colmar.fr"},
+    {"name":"Ports de Mulhouse-Rhin","address":"8 rue du 17 novembre, 68000 Mulhouse","phone":"03 89 28 03 30","website":"www.ports-mulhouse-rhin.fr"}
+  ],
+  "administrative_features": ["Prefecture de region","Prefecture de departement","Sous-Prefecture","Autre commune","Frontiere","Limite de region","Limite de departement","Limite de commune"],
+  "transport_features": ["Ligne ferroviaire classique","Ligne ferroviaire a grande vitesse","Autoroute","Route nationale ou departementale","Acces ferroviaire"],
+  "logistics_features": ["Port ou quai de commerce public","Port ou quai de commerce prive","Colis lourds","Conteneurs","Rampe Ro-Ro","Terminal relie AP+","Port de plaisance","Halte de plaisance"],
+  "notes": [
+    "Le PDF indique que les données sont susceptibles d'être modifiées par avis à la batellerie.",
+    "Ne pas transformer les valeurs du profil CEMT en contraintes locales réelles si la donnée d'infrastructure n'existe pas.",
+    "Preserver les annotations source '* PHEN' et '**' sans leur attribuer une signification non documentee."
+  ]
+}
