@@ -1,7 +1,7 @@
 (function () {
 "use strict";
 
-const BUILD_ID = "SIG-POCHE-2026-08-18-V6-COMMUNES";
+const BUILD_ID = "SIG-POCHE-2026-08-19-V7-ROUTES";
 
 function getTag(props, keys) {
   if (!props) return null;
@@ -68,8 +68,6 @@ function offsetLatLngs(mapRef, latlngs, pixelOffset) {
 
 // ---------------------------------------------------------------------
 // Resolution communale locale (module optionnel communeResolver.js).
-// Si le module est absent ou pas encore charge, l'app continue de
-// fonctionner normalement (repli texte, aucune exception).
 // ---------------------------------------------------------------------
 function communeSectionHtml(list, pending) {
   if (pending) return "<div class=\"sheet-section\"><h4>Localisation</h4><div class=\"note-box\">Resolution de la commune en cours...</div></div>";
@@ -81,26 +79,58 @@ function communeSectionHtml(list, pending) {
   return "<div class=\"sheet-section\"><h4>Communes traversees</h4><ul style=\"margin:0;padding-left:18px;font-size:14px;color:#101c22;\">" + items + "</ul></div>";
 }
 
-function withCommuneSection(sheetBodyEl, cacheKey, lon, lat, geometry, staticHtml) {
+// Section optionnelle "profil de route officiel VNF 2018", construite a
+// partir des communes resolues (recherche par correspondance de toponymes).
+function routeProfileSectionHtml(list) {
+  if (!window.VNFDataset || !window.VNFDataset.isReady() || !list || !list.length) return "";
+  const communeNames = list.map(function (c) { return c.name; });
+  const profile = window.VNFDataset.routeProfileForCommunes(communeNames);
+  if (!profile) return "";
+  return "<div class=\"sheet-section\"><h4>Profil de route officiel (VNF 2018)</h4><div class=\"attr-grid\">" +
+    attrCard("Section", profile.name, true) +
+    attrCard("Distance (km)", profile.distance_km) +
+    attrCard("Hauteur libre (m)", profile.hauteur_libre_m) +
+    attrCard("Mouillage cible (m)", profile.mouillage_cible_m) +
+    attrCard("Nombre d'ecluses", profile.ecluses) +
+    attrCard("Longueur utile ecluse (m)", profile.ecluse_longueur_m) +
+    attrCard("Largeur utile ecluse (m)", profile.ecluse_largeur_m) +
+    "</div></div>";
+}
+
+function withCommuneSection(sheetBodyEl, cacheKey, lon, lat, geometry, staticHtml, includeRouteProfile) {
   const hasResolver = !!(window.CommuneResolver);
+  function renderFull(list, pending) {
+    return staticHtml + communeSectionHtml(list, pending) + (includeRouteProfile ? routeProfileSectionHtml(list) : "");
+  }
   if (!hasResolver) {
-    sheetBodyEl.innerHTML = staticHtml + communeSectionHtml(null, false);
+    sheetBodyEl.innerHTML = renderFull(null, false);
     sheetBodyEl._currentCacheKey = cacheKey;
     return;
   }
   const alreadyReady = window.CommuneResolver.isReady();
   const immediate = alreadyReady ? window.CommuneResolver.resolveForFeature(cacheKey, lon, lat, geometry) : null;
-  sheetBodyEl.innerHTML = staticHtml + communeSectionHtml(immediate, !alreadyReady);
+  sheetBodyEl.innerHTML = renderFull(immediate, !alreadyReady);
   sheetBodyEl._currentCacheKey = cacheKey;
   if (!alreadyReady) {
     window.CommuneResolver.ready().then(function () {
       if (sheetBodyEl._currentCacheKey !== cacheKey) return;
       const list = window.CommuneResolver.resolveForFeature(cacheKey, lon, lat, geometry);
-      sheetBodyEl.innerHTML = staticHtml + communeSectionHtml(list, false);
+      sheetBodyEl.innerHTML = renderFull(list, false);
+      if (includeRouteProfile && window.VNFDataset && !window.VNFDataset.isReady()) {
+        window.VNFDataset.ready().then(function () {
+          if (sheetBodyEl._currentCacheKey !== cacheKey) return;
+          sheetBodyEl.innerHTML = renderFull(list, false);
+        }).catch(function () {});
+      }
     }).catch(function () {
       if (sheetBodyEl._currentCacheKey !== cacheKey) return;
-      sheetBodyEl.innerHTML = staticHtml + communeSectionHtml(null, false);
+      sheetBodyEl.innerHTML = renderFull(null, false);
     });
+  } else if (includeRouteProfile && window.VNFDataset && !window.VNFDataset.isReady()) {
+    window.VNFDataset.ready().then(function () {
+      if (sheetBodyEl._currentCacheKey !== cacheKey) return;
+      sheetBodyEl.innerHTML = renderFull(immediate, false);
+    }).catch(function () {});
   }
 }
 
@@ -179,8 +209,8 @@ try {
     maxZoom: 19,
     attribution: "&copy; OpenStreetMap contributors — Donnees voies navigables : VNF / OSM / IGN BD TOPO / Sandre BD Topage / Etalab (contours communaux)"
   }).addTo(map);
-  if (window.VNFDataset) { window.VNFDataset.ready().catch(function () {}); }
   if (window.CommuneResolver) { window.CommuneResolver.ready().catch(function () {}); }
+  if (window.VNFDataset) { window.VNFDataset.ready().catch(function () {}); }
 } catch (fatalMapError) {
   console.error("Erreur fatale a l'initialisation de la carte:", fatalMapError);
   const overlay = document.createElement("div");
@@ -553,18 +583,18 @@ function openWaterwaySheet(props, st, geometry, cacheKey) {
   const maxwidth = getTag(props, KEYS.maxwidth);
   const width = getTag(props, KEYS.width);
   let cemtOfficialHtml = "";
-if (window.VNFDataset && window.VNFDataset.isReady() && cemt) {
-  const profile = window.VNFDataset.cemtProfile(cemt);
-  if (profile) {
-    cemtOfficialHtml = "<div class=\"sheet-section\"><h4>Profil CEMT officiel (VNF 2018)</h4><div class=\"attr-grid\">" +
-      attrCard("Longueur max (m)", profile.longueur_m) +
-      attrCard("Largeur max (m)", profile.largeur_m) +
-      attrCard("Enfoncement (m)", profile.enfoncement_m) +
-      attrCard("Tirant d'air max (m)", profile.tirant_air_m) +
-      attrCard("Tonnage (t)", profile.tonnage_t) +
-      "</div></div>";
+  if (window.VNFDataset && window.VNFDataset.isReady() && cemt) {
+    const profile = window.VNFDataset.cemtProfile(cemt);
+    if (profile) {
+      cemtOfficialHtml = "<div class=\"sheet-section\"><h4>Profil CEMT officiel (VNF 2018)</h4><div class=\"attr-grid\">" +
+        attrCard("Longueur max (m)", profile.longueur_m) +
+        attrCard("Largeur max (m)", profile.largeur_m) +
+        attrCard("Enfoncement (m)", profile.enfoncement_m) +
+        attrCard("Tirant d'air max (m)", profile.tirant_air_m) +
+        attrCard("Tonnage (t)", profile.tonnage_t) +
+        "</div></div>";
+    }
   }
-}
   const note = getTag(props, KEYS.note) || getTag(props, KEYS.description);
   const staticHtml =
     "<div class=\"sheet-section\"><h4>Classification</h4><div class=\"tag-row\"><span class=\"tag-chip\" style=\"background:" + st.color + "22;color:" + st.color + "\">" + escapeHtml(st.label) + "</span></div></div>" +
@@ -573,7 +603,7 @@ if (window.VNFDataset && window.VNFDataset.isReady() && cemt) {
     "</div></div>" +
     cemtOfficialHtml +
     (note ? ("<div class=\"sheet-section\"><h4>Notes</h4><div class=\"note-box\">" + escapeHtml(note) + "</div></div>") : "");
-  withCommuneSection(sheetBody, cacheKey || null, null, null, geometry || null, staticHtml);
+  withCommuneSection(sheetBody, cacheKey || null, null, null, geometry || null, staticHtml, true);
   openSheet();
 }
 function openReservoirSheet(props, name, geometry, cacheKey) {
@@ -583,7 +613,7 @@ function openReservoirSheet(props, name, geometry, cacheKey) {
   sheetIconEl.innerHTML = iconGeneric("#fff");
   const note = getTag(props, KEYS.note) || getTag(props, KEYS.description);
   const staticHtml = "<div class=\"sheet-section\"><h4>Attributs</h4><div class=\"note-box\">Ouvrage soumis a la reglementation Securite des Ouvrages Hydrauliques (SOH). " + (note ? escapeHtml(note) : "Aucune note complementaire disponible dans les donnees actuelles.") + "</div></div>";
-  withCommuneSection(sheetBody, cacheKey || null, null, null, geometry || null, staticHtml);
+  withCommuneSection(sheetBody, cacheKey || null, null, null, geometry || null, staticHtml, false);
   openSheet();
 }
 function openPointSheet(props, cat, cacheKey, lon, lat) {
@@ -619,23 +649,23 @@ function openPointSheet(props, cat, cacheKey, lon, lat) {
     bodyHtml += "<div class=\"sheet-section\"><h4>Informations</h4><div class=\"attr-grid\">" + attrCard("Gestionnaire", operatorTag) + attrCard("Horaires", openingHours) + "</div></div>";
   }
   if (window.VNFDataset && window.VNFDataset.isReady() && (cat === "quai_commerce" || cat === "port_plaisance")) {
-  const portInfo = window.VNFDataset.portInfoForName(name);
-  if (portInfo) {
-    bodyHtml += "<div class=\"sheet-section\"><h4>Port officiel VNF</h4><div class=\"attr-grid\">" +
-      attrCard("Gestionnaire", portInfo.operator) +
-      attrCard("Adresse", portInfo.address, true) +
-      attrCard("Téléphone", portInfo.phone) +
-      attrCard("Email", portInfo.email) +
-      "</div></div>";
+    const portInfo = window.VNFDataset.portInfoForName(name);
+    if (portInfo) {
+      bodyHtml += "<div class=\"sheet-section\"><h4>Port officiel VNF</h4><div class=\"attr-grid\">" +
+        attrCard("Gestionnaire", portInfo.operator) +
+        attrCard("Adresse", portInfo.address, true) +
+        attrCard("Telephone", portInfo.phone) +
+        attrCard("Email", portInfo.email) +
+        "</div></div>";
+    }
   }
-}
   if (note) bodyHtml += "<div class=\"sheet-section\"><h4>Notes d'exploitation</h4><div class=\"note-box\">" + escapeHtml(note) + "</div></div>";
   if (addrCity) {
     bodyHtml += "<div class=\"sheet-section\"><h4>Localisation</h4><div class=\"attr-grid\">" + attrCard("Commune", addrCity, true) + "</div></div>";
     sheetBody.innerHTML = bodyHtml;
     sheetBody._currentCacheKey = cacheKey || null;
   } else {
-    withCommuneSection(sheetBody, cacheKey || null, lon, lat, null, bodyHtml);
+    withCommuneSection(sheetBody, cacheKey || null, lon, lat, null, bodyHtml, false);
   }
   openSheet();
 }
@@ -659,7 +689,7 @@ function openVnfSegmentSheet(props, cacheKey, geometry) {
     "<div class=\"sheet-section\"><h4>Positionnement</h4><div class=\"attr-grid\">" + attrCard("PK debut", fpkh) + attrCard("PK fin", tpkh) + attrCard("Longueur (km)", longueur) + attrCard("Nature", nature) + "</div></div>" +
     "<div class=\"sheet-section\"><h4>Navigation</h4><div class=\"attr-grid\">" + attrCard("Navigabilite", navigabilite) + attrCard("Gabarit", gabarit) + attrCard("Largeur", largeur) + "</div></div>" +
     "<div class=\"sheet-section\"><h4>Domanialite</h4><div class=\"attr-grid\">" + attrCard("Statut domanial", statutDom) + attrCard("Autorite", autorite) + attrCard("Exploitant", exploitant) + "</div></div>";
-  withCommuneSection(sheetBody, cacheKey || null, null, null, geometry || null, staticHtml);
+  withCommuneSection(sheetBody, cacheKey || null, null, null, geometry || null, staticHtml, true);
   openSheet();
 }
 safeSetup("Initialisation bottom sheet", function () {
