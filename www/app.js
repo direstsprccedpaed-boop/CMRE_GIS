@@ -809,25 +809,7 @@ safeSetup("Initialisation recherche", function () {
 });
 
 function buildNavSvg() {
-  return "<svg viewBox=\"0 0 340 230\" width=\"100%\" height=\"auto\" style=\"max-width:440px;\">" +
-    "<rect x=\"0\" y=\"150\" width=\"340\" height=\"80\" fill=\"#c9855a\" opacity=\"0.35\"/>" +
-    "<rect x=\"0\" y=\"65\" width=\"340\" height=\"85\" fill=\"#3fa7d6\" opacity=\"0.55\"/>" +
-    "<line x1=\"0\" y1=\"65\" x2=\"340\" y2=\"65\" stroke=\"#0b2e45\" stroke-width=\"1.5\" stroke-dasharray=\"4 3\"/>" +
-    "<rect x=\"55\" y=\"32\" width=\"230\" height=\"92\" fill=\"none\" stroke=\"#f7ca18\" stroke-width=\"2\" stroke-dasharray=\"5 4\"/>" +
-    "<g><path d=\"M95 108 L120 88 L235 88 L258 108 L235 116 L120 116 Z\" fill=\"#0b2e45\" stroke=\"#08202f\" stroke-width=\"1\"/>" +
-    "<rect x=\"95\" y=\"106\" width=\"163\" height=\"4\" fill=\"#e67e22\"/>" +
-    "<circle cx=\"108\" cy=\"107\" r=\"4\" fill=\"#e67e22\"/><circle cx=\"245\" cy=\"107\" r=\"4\" fill=\"#e67e22\"/>" +
-    "<rect x=\"130\" y=\"72\" width=\"24\" height=\"16\" fill=\"#e67e22\"/><rect x=\"157\" y=\"72\" width=\"24\" height=\"16\" fill=\"#c0392b\"/><rect x=\"184\" y=\"72\" width=\"24\" height=\"16\" fill=\"#e67e22\"/>" +
-    "<rect x=\"98\" y=\"62\" width=\"26\" height=\"26\" rx=\"3\" fill=\"#ecf0f1\" stroke=\"#0b2e45\" stroke-width=\"1.5\"/>" +
-    "<rect x=\"103\" y=\"68\" width=\"6\" height=\"6\" fill=\"#3fa7d6\"/><rect x=\"113\" y=\"68\" width=\"6\" height=\"6\" fill=\"#3fa7d6\"/>" +
-    "<line x1=\"111\" y1=\"62\" x2=\"111\" y2=\"50\" stroke=\"#0b2e45\" stroke-width=\"2\"/></g>" +
-    "<line x1=\"70\" y1=\"32\" x2=\"70\" y2=\"88\" stroke=\"#e67e22\" stroke-width=\"2\"/><text x=\"20\" y=\"60\" font-size=\"10\" fill=\"#e67e22\" font-weight=\"700\">Tirant d'air</text>" +
-    "<line x1=\"300\" y1=\"20\" x2=\"300\" y2=\"65\" stroke=\"#c0392b\" stroke-width=\"2\"/><text x=\"266\" y=\"18\" font-size=\"10\" fill=\"#c0392b\" font-weight=\"700\">Hauteur libre</text>" +
-    "<line x1=\"70\" y1=\"108\" x2=\"70\" y2=\"150\" stroke=\"#1e6ea0\" stroke-width=\"2\"/><text x=\"26\" y=\"135\" font-size=\"10\" fill=\"#1e6ea0\" font-weight=\"700\">Tirant d'eau</text>" +
-    "<line x1=\"300\" y1=\"65\" x2=\"300\" y2=\"160\" stroke=\"#2c7873\" stroke-width=\"2\" stroke-dasharray=\"3 3\"/><text x=\"304\" y=\"115\" font-size=\"10\" fill=\"#2c7873\" font-weight=\"700\">Mouillage cible</text>" +
-    "<line x1=\"150\" y1=\"150\" x2=\"150\" y2=\"160\" stroke=\"#8e44ad\" stroke-width=\"3\"/><text x=\"158\" y=\"160\" font-size=\"10\" fill=\"#8e44ad\" font-weight=\"700\">Pied de pilote</text>" +
-    "<line x1=\"0\" y1=\"192\" x2=\"340\" y2=\"192\" stroke=\"#f7ca18\" stroke-width=\"2\"/><text x=\"120\" y=\"208\" font-size=\"10\" fill=\"#8a6d0a\" font-weight=\"700\">Chenal de navigation</text>" +
-    "</svg>";
+  return "<img src=\"./icons/rectangle-navigation-bateau.svg\" alt=\"Rectangle de navigation\" style=\"max-width:100%;height:auto;display:block;margin:0 auto;\">";
 }
 safeSetup("Initialisation glossaire", function () {
   const navWrap = document.getElementById("navSvgWrap");
